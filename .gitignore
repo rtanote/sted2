@@ -1,0 +1,21 @@
+# Working directories
+_devterm_snapshot/
+_pristine/
+work/
+
+# Build artifacts (in case anyone builds in-tree)
+sted2-2.07m+20010303/**/*.o
+sted2-2.07m+20010303/**/*.a
+sted2-2.07m+20010303/**/Makefile
+sted2-2.07m+20010303/config.cache
+sted2-2.07m+20010303/config.log
+sted2-2.07m+20010303/config.status
+sted2-2.07m+20010303/config.h
+sted2-2.07m+20010303/stamp-h
+sted2-2.07m+20010303/build.log
+sted2-2.07m+20010303/sted2/sted2
+sted2-2.07m+20010303/sted2/sted2.cnf
+sted2-2.07m+20010303/sted2/sted2.fon
+
+# macOS
+.DS_Store
