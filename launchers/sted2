@@ -1,0 +1,38 @@
+#!/bin/bash
+# /usr/local/bin/sted2 — system launcher for STed2.
+#  - Discovers the current snd-virmidi card and patches midi_port in
+#    /usr/local/lib/sted/sted2.cnf to match (the cnf is mode 0664 root:audio
+#    so any audio-group user can update it).
+#  - Connects virmidi -> FluidSynth via aconnect.
+#  - Falls back gracefully (warn, keep going) if virmidi or FluidSynth is
+#    missing; PLAY uses aplaymidi directly via sted2-play and only needs
+#    FluidSynth.
+#  - cd into the data dir before exec so STed2's strmfe(argv[0], "cnf")
+#    resolves to /usr/local/lib/sted/sted2.cnf.
+
+set -u
+
+STED2_DIR=/usr/local/lib/sted
+STED2_CNF=${STED2_DIR}/sted2.cnf
+
+VIRMIDI_LINE=$(aconnect -l 2>/dev/null | awk '/^client [0-9]+: .Virtual Raw MIDI [0-9]+-0./ {print; exit}')
+FLUID=$(aconnect -l 2>/dev/null | awk '/^client [0-9]+: .FLUID Synth/ {gsub(":","",$2); print $2; exit}')
+
+if [ -n "$VIRMIDI_LINE" ]; then
+  VIRMIDI_SEQ=$(echo "$VIRMIDI_LINE" | awk '{gsub(":","",$2); print $2}')
+  VIRMIDI_CARD=$(echo "$VIRMIDI_LINE" | sed -n 's/.*Virtual Raw MIDI \([0-9]\+\)-0.*/\1/p')
+  VIRMIDI_DEV=/dev/snd/midiC${VIRMIDI_CARD}D0
+
+  if [ -w "$STED2_CNF" ]; then
+    sed -i "s%^#midi_port=/dev/snd/midiC[0-9]*D0%#midi_port=${VIRMIDI_DEV}%" "$STED2_CNF"
+  fi
+
+  if [ -n "$FLUID" ]; then
+    aconnect "${VIRMIDI_SEQ}:0" "${FLUID}:0" 2>/dev/null || true
+  fi
+else
+  echo "sted2: snd-virmidi not loaded; MIDI IN echo disabled (PLAY still works via aplaymidi)." >&2
+fi
+
+cd "$STED2_DIR"
+exec ./sted2 "$@"

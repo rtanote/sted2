@@ -1,0 +1,14 @@
+#!/bin/bash
+# Resolve FluidSynth's ALSA seq port at runtime and aplaymidi the file(s).
+# Called by STed2 as the external #player= command.
+
+set -u
+
+FLUID=$(aconnect -lo 2>/dev/null | awk '/^client [0-9]+: .FLUID Synth/ {gsub(":","",$2); print $2; exit}')
+
+if [ -z "${FLUID}" ]; then
+  echo "sted2-play: FLUID Synth client not found." >&2
+  exit 1
+fi
+
+exec aplaymidi -p "${FLUID}:0" "$@"
