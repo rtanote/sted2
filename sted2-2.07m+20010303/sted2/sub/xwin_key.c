@@ -505,6 +505,38 @@ Bool check_keycode( KeyCode kc, char *table ) {
   return ((table[kc/8]>>(kc%8))&1!=0)?True:False;
 }
 
+/* Track window visibility so we only snapshot a known-good state.
+   STed2 has two offscreen pixmaps (tscr for text, gscr for graphics) but no
+   pixmap that holds the composed visible image, so the only reliable mirror
+   is to copy from the live window when it's fully on screen. */
+static Pixmap XSTed_mirror = 0;
+static int    XSTed_vis_state = VisibilityUnobscured;
+
+static void XSTed_ensure_mirror( void ) {
+  if ( XSTed_mirror == 0 ) {
+    XSTed_mirror = XCreatePixmap( XSTed_d, XSTed_w,
+                                  W_Width, W_Height, XSTed_depth );
+    XFillRectangle( XSTed_d, XSTed_mirror, XSTed_egc,
+                    0, 0, W_Width, W_Height );
+  }
+}
+
+/* Snapshot the live window into the mirror. Caller must only invoke this
+   when the window is actually showing valid content (not minimised, not
+   fully obscured). */
+static void XSTed_capture_mirror( void ) {
+  XSTed_ensure_mirror();
+  XCopyArea( XSTed_d, XSTed_w, XSTed_mirror, XSTed_wgc,
+             0, 0, W_Width, W_Height, 0, 0 );
+}
+
+static void XSTed_restore_from_mirror( void ) {
+  if ( XSTed_mirror == 0 ) return;
+  XCopyArea( XSTed_d, XSTed_mirror, XSTed_w, XSTed_wgc,
+             0, 0, W_Width, W_Height, 0, 0 );
+  XSync( XSTed_d, False );
+}
+
 void XSTed_key_wait( void ) {
 
   XEvent e;
@@ -512,21 +544,36 @@ void XSTed_key_wait( void ) {
 
   if ( isinputmode !=0 &&  sbp<sbp_len ) return;
 
+  /* The window is in a known-good state right now (caller just finished
+     painting and is asking us to wait). Refresh the mirror so a later
+     minimise/expose can be repainted from it. */
+  if ( XSTed_vis_state == VisibilityUnobscured )
+    XSTed_capture_mirror();
+
   XSTed_rwindow();
   while ( a ) {
     XPeekEvent( XSTed_d, &e );
 
     switch ( e.type ) {
-      
+
     case Expose:
+    case MapNotify:
       XNextEvent( XSTed_d, &e );
+      XSTed_restore_from_mirror();
       break;
-      
+
+    case VisibilityNotify:
+      XNextEvent( XSTed_d, &e );
+      XSTed_vis_state = e.xvisibility.state;
+      if ( e.xvisibility.state == VisibilityUnobscured )
+        XSTed_restore_from_mirror();
+      break;
+
     case KeyRelease:
     case KeyPress:
       a=False;
       break;
-      
+
     case ButtonPress:
     case SelectionNotify:
       if (isinputmode!=0) a=False;
@@ -547,9 +594,20 @@ void XSTed_midi_wait( void ) {
   XEvent e;
   Bool a=True;
 
+  if ( XSTed_vis_state == VisibilityUnobscured )
+    XSTed_capture_mirror();
+
   XSTed_rwindow();
   while ( a ) {
     usleep(1000);
+
+    while ( XCheckTypedEvent( XSTed_d, Expose, &e ) ) XSTed_restore_from_mirror();
+    while ( XCheckTypedEvent( XSTed_d, MapNotify, &e ) ) XSTed_restore_from_mirror();
+    while ( XCheckTypedEvent( XSTed_d, VisibilityNotify, &e ) ) {
+      XSTed_vis_state = e.xvisibility.state;
+      if ( e.xvisibility.state == VisibilityUnobscured )
+        XSTed_restore_from_mirror();
+    }
 
     XCheckMaskEvent( XSTed_d, Expose|KeyRelease|KeyPress, &e );
     switch ( e.type ) {
@@ -558,7 +616,7 @@ void XSTed_midi_wait( void ) {
       XPutBackEvent( XSTed_d, &e );
       a=False;
       break;
-      
+
     default:
       break;
     }

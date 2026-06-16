@@ -190,7 +190,8 @@ int Init_STed_Window( void ) {
   XMapWindow( XSTed_d, XSTed_w );
 
   XSelectInput ( XSTed_d, XSTed_w,
-                 ExposureMask|KeyReleaseMask|KeyPressMask|ButtonPressMask );
+                 ExposureMask|KeyReleaseMask|KeyPressMask|ButtonPressMask
+                 |StructureNotifyMask|VisibilityChangeMask );
 
   while(1) {
     XNextEvent ( XSTed_d, &XSTed_ev ) ;
