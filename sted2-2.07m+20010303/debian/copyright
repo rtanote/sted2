@@ -1,0 +1,19 @@
+This package was debianized by Masayuki Hatta <mhatta@debian.or.jp> on
+Sat, 29 Apr 2000 11:57:11 +0900, and picked up by Junichi Uekawa
+<dancer@debian.org> on 16 May 2001
+
+It was downloaded from 
+  sted2.sourceforge.net
+
+Upstream Author(s): 
+  the late Takayuki "TURBO" Toda (1991-1997)
+  Daisuke Nagano (1998-)
+  
+Copyright:
+
+Right for modification and improvement is granted. However it is
+requested that when a modified version is publicly released,
+the accompanying DOC and HIS files are distributed along with it.
+
+
+See README and tuitou.doc (written in Japanese).

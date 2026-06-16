@@ -340,8 +340,15 @@ int Setup_FontSet( void ) {
   if ( font_name[0]==0 ) strcpy( font_name, XSTed_Default_Font );
   XSTed_fs = XCreateFontSet ( XSTed_d, font_name,
                               &miss, &n_miss, &def);
-
-  if ( n_miss > 0 ) return -1;
+ 
+  if ( n_miss > 0 ) {
+    /* the XSTed_Default_Font may miss some fonts needed by some locales,
+     * so if this happens we should try the default locale */
+    setlocale(LC_CTYPE, "C");
+    XSTed_fs = XCreateFontSet ( XSTed_d, font_name,
+				&miss, &n_miss, &def);
+    if ( n_miss > 0) return -1;
+  }
 
   e = XExtentsOfFontSet( XSTed_fs );
   XmbTextExtents( XSTed_fs, "A", 1, &i_ret, &l_ret ); 

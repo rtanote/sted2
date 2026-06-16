@@ -1443,7 +1443,7 @@ void	same_shift(int spo,int m,int cu)
   if(ec!=0){
     char b[4096];
     int ret;
-    ret=sprintf(b,4096,_("%4d times of SAME MEAS is invalid"),ec);
+    ret=snprintf(b,4096,_("%4d times of SAME MEAS is invalid"),ec);
     if ( ret > 0 ) {
       msg(b);
     }

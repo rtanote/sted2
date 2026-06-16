@@ -43,7 +43,7 @@
 #time_lag=8000		* グラフィック表示等の再表示までのタイムラグ(default=8000)
 
 			* 音源定義ファイルが存在するパス
-#def_path=@DEF_PATH@
+#def_path=/etc/sted2/deffile
 
 			* '-F'無指定時に使用する音源定義ファイル
 			* (default=STed2.def)
@@ -79,8 +79,12 @@
 * (先頭に&を付けると演奏を強制的に開始して起動)
 
 *	+shift		+ctrl		+shift+ctrl
-#mplay=1,rcp.x -spb	,rcp.x -skb	,rcp.x -spb	* 演奏して無い時
-#mplay=9,%rcp.x -p	,%rcp.x -p	,&rcp.x -p	* 演奏している時
+
+#mplay=1,timidity -ESR -idq -f -s22.05 , timidity -ESR -idq -f -s22.05 , timidity -ESR -idq -f -s22.05
+#mplay=9,%timidity -ESR -idq -f -s22.05 , %timidity -ESR -idq -f -s22.05 , &timidity -ESR -idq -f -s22.05
+
+*#mplay=1,rcp.x -spb	,rcp.x -skb	,rcp.x -spb	* 演奏して無い時
+*#mplay=9,%rcp.x -p	,%rcp.x -p	,&rcp.x -p	* 演奏している時
 
 *#mplay=1,rcdp.x -spb	,rcdp.x -spb	,rcdp.x -spb	* 演奏して無い時
 *#mplay=9,%rcdp.x -p	,%rcdp.x -p	,&rcdp.x -p	* 演奏している時
@@ -138,9 +142,9 @@
 *          [コメント(37文字まで)               ]-[ MODE ][コマンド(38文字まで)][拡張子]
 #program=a,使用音色リスト表示 (CM-64)           ,pb	,command.x /c tone.x -b -c|more
 #program=b,使用音色リスト表示 (SC-55)           ,pb	,command.x /c tone.x -b -g|more
-#program=c,歌詞ファイル編集    (ed filename.WRD),f	,mule			,WRD
-#program=d,ドキュメント編集    (     〃    .DOC),f	,mule			,DOC
-#program=e,ドキュメント編集(select)  (.DOC/.TXT),s	,mule			,DOC:TXT
+#program=c,歌詞ファイル編集    (ed filename.WRD),f	,emacs			,WRD
+#program=d,ドキュメント編集    (     〃    .DOC),f	,emacs			,DOC
+#program=e,ドキュメント編集(select)  (.DOC/.TXT),s	,emacs			,DOC:TXT
 
 *#program=g,SNG出力 (for Mu-1GS format)    (.SNG),pbf	,tosng -b
 *#program=h,MML出力 (for MDD(MDL)format)   (.MDL),pbf	,tomml -b -d
@@ -188,9 +192,11 @@
 *       bit1: sted controllable(1)
 
 
-#player=1,timidity -idq -f -s22.05
+#player=1,timidity -idq -f -EFchorus=0 -EFreverb=0 -s22.05
 
 *#player=3,timidity -iSt -s22.05
+
+*#player=0,midiplay -q -n -88 --high-priority --sted_control
 
 *#player=0,playmidi -e
 

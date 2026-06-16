@@ -1,0 +1,20 @@
+Source: sted2
+Section: sound
+Priority: optional
+Maintainer: Junichi Uekawa <dancer@debian.org>
+Build-Depends: debhelper, libncurses5-dev, xlibs-dev, gettext-base, gettext
+Standards-Version: 3.5.6
+
+Package: sted2
+Architecture: any
+Depends: ${shlibs:Depends}
+Suggests: timidity | midiplay
+Description: a fast, functional MIDI sequencer
+ STed2 is an open-source MIDI sequencer for Un*x/X platforms. 
+ Originally written by the late Takayuki "TURBO" Toda for 
+ SHARP X680x0 personal workstation series, it's now ported to GNU/Linux 
+ and fully works on ncurses and X!
+ .
+ The most distinctive feature of STed2 is its inputting method.
+ STed2 supports "step" inputting, which enables you to input MIDI data 
+ incredibly fast. Also supports real-time recording via /dev/midi.

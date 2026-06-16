@@ -1,0 +1,79 @@
+sted2 (2.07m+20010303-4) unstable; urgency=low
+
+  * Work around missing font problem reported by Juha Erkkila.
+    (closes: #141028)
+
+ -- Junichi Uekawa <dancer@debian.org>  Sun,  7 Apr 2002 09:15:11 +0900
+
+sted2 (2.07m+20010303-3) unstable; urgency=low
+
+  * fixing the non-conffile in /etc bug.
+    (closes: #132837)
+  * sted2 install path from /etc/ to /usr/share/sted2/
+  * have symbollic link from /usr/share/sted2 to /etc/sted2, for 
+    files that are configurabke.
+
+ -- Junichi Uekawa <dancer@debian.org>  Sun, 10 Feb 2002 01:29:44 +0900
+
+sted2 (2.07m+20010303-2) unstable; urgency=low
+
+  * maintenance release 
+  * bump up the policy-version to 3.5.6
+  * edits.c 1446, fixed sprintf -> snprintf.
+  * removed the emacs setting in the changelog.
+  * debian/conffiles: added etc/sted2/deffile/cm64.def etc.
+    sted2.fon remains. It needs to be fixed somehow.
+
+ -- Junichi Uekawa <dancer@debian.org>  Fri, 11 Jan 2002 23:10:18 +0900
+
+sted2 (2.07m+20010303-1) unstable; urgency=low
+
+  * Initial upload to Debian Archive. Close the ITP bug (closes: #96760)
+  * removed rcconv Suggestion, because it doesn't seem to be really necessary.
+  * Please note that all changelog prior to this version are not part
+    of Debian, but left as it is for history's sake.
+  * tweaked sted2.cnf somehow to make it work.
+
+ -- Junichi Uekawa <dancer@debian.org>  Wed, 16 May 2001 22:37:50 +0900
+
+sted2 (2.07m+20000429-1) unstable; urgency=low
+
+  * New upstream release
+  * Tweaked sted2.cnf again.
+
+ -- Masayuki Hatta <masayuki-h@geocities.co.jp>  Sat, 17 Jun 2000 09:39:39 +0900
+
+sted2 (2.07m+20000428-2) unstable; urgency=low
+
+  * Added Suggests: timidity | midiplay
+  * Added conffiles.
+  * Tweaked sted2.cnf.  
+
+ -- Masayuki Hatta <mhatta@debian.or.jp>  Sat, 29 Apr 2000 15:08:29 +0900
+
+sted2 (2.07m+20000428-1) unstable; urgency=low
+
+  * New upstream release
+  * Re-packaged.
+  
+ -- Masayuki Hatta <mhatta@debian.or.jp>  Sat, 29 Apr 2000 11:57:11 +0900
+
+sted2 (2.07m+19990601-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Masayuki Hatta <mhatta@debian.or.jp>  Mon, 13 Sep 1999 11:19:38 +0900
+
+sted2 (2.07m+19990204-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Masayuki Hatta <masayuki-h@geocities.co.jp>  Fri,  5 Feb 1999 00:15:56 +0900
+
+sted2 (2.07m+19990125-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Masayuki Hatta <masayuki-h@geocities.co.jp>  Fri, 29 Jan 1999 23:41:31 +0900
+
+

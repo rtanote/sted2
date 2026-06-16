@@ -1,3 +1,8 @@
+2002-04-07  Junichi Uekawa  <dancer@debian.org>
+
+	* sted2/sub/xwin.c (Setup_Fontset): apply patch from Juha Erkkila,
+	  to fall back locale when fontset cannot be created.
+
 2001-03-03  Daisuke Nagano  <breeze.nagano@nifty.ne.jp>
 
 	* sted2/*.c: 大量の sprintf を snprintf に修正。
