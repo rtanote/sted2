@@ -153,7 +153,6 @@ void *_dos_malloc(int i) {
   void *tmp;
 
   tmp = (void *)malloc(i);
-  if ( tmp == NULL ) tmp = (void *)0x82000000;
 
   return tmp;
   
