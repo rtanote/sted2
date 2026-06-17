@@ -19,7 +19,7 @@ VPATH = @srcdir@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 
-bindir = @bindir@
+bindir = @sted_default_path@
 sbindir = @sbindir@
 libexecdir = @libexecdir@
 datadir = @datadir@

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = intl sted2 po etc doc contrib
+SUBDIRS = sted2 etc doc contrib
 
 EXTRA_DIST = README.jp \
 	intl/libgettext.h \

@@ -18,9 +18,10 @@ hookup so you can hear what you sequence on a stock soft-synth install.
 | GCC ≥ 14 build | Implicit declarations are errors; raw multi-line string literals are errors; `-fno-common` breaks header-level globals; C99 inline drops external symbols. | `CFLAGS` set documented below; raw multiline `sprintf` in `rcptomid.c` joined with C string continuation. |
 | Debian build-deps | Package names from 2002 (`xlibs-dev`, `libxr-dev`, `libncurses5-dev`) no longer exist. | `debian/control` updated; `debian/compat` set to a working debhelper level. |
 | X11 minimize / restore | Without a compositor, restoring an iconified window leaves it black. | Window contents are mirrored to a private pixmap and copied back on `Expose` / `MapNotify` / `VisibilityNotify`. |
-| FluidSynth integration | STed2 wants `/dev/midi`-style raw devices and forks an external player; neither maps to a stock soft-synth. | Launcher wires `snd-virmidi` ↔ FluidSynth via `aconnect`; `sted2-play` forwards SMF tempfiles to FluidSynth via `aplaymidi`. |
+| `make install` workflow | `po/` died on EUC-JP comments; cnf substitution was a no-op; binary and cnf were installed to incompatible paths; launchers had no install rule. | `po/` and `intl/` dropped from `SUBDIRS`; cnf substitution fixed; the real binary is installed alongside the cnf (`${prefix}/lib/sted/`) and a bash launcher at `${prefix}/bin/sted2` is what users actually invoke. |
+| FluidSynth integration | STed2 wants a `/dev/midi`-style raw device and forks an external player; neither maps to a stock soft-synth. | Launcher wires `snd-virmidi` ↔ FluidSynth via `aconnect`; `sted2-play` forwards SMF tempfiles to FluidSynth via `aplaymidi`. |
 
-## Build
+## Quick start
 
 Tested on Ubuntu 22.04 / 24.04 (x86_64 and aarch64).
 
@@ -33,9 +34,32 @@ cd sted2-2.07m+20010303
 ./configure --prefix=/usr/local
 make CFLAGS="-g -O2 -fgnu89-inline -fcommon \
              -Wno-implicit-function-declaration -Wno-unused-result"
+sudo make install
+
+sudo usermod -aG audio "$USER"   # log out / log in once
 ```
 
-`CFLAGS` notes:
+Then just type `sted2`. To get sound out of the box, see
+[FluidSynth + virmidi setup](#fluidsynth--virmidi-setup) below.
+
+### What `make install` produces
+
+```text
+/usr/local/lib/sted/                 # data dir (root:audio, g+w)
+    sted2                            # the real binary
+    sted2.cnf                        # editable config (see "Customizing")
+    sted2.fon
+    deffile/{cm64,sc55,sc55mk2,sc88}.def
+/usr/local/bin/
+    sted2                            # bash launcher — what users invoke
+    sted2-play                       # PLAY-time wrapper around aplaymidi
+```
+
+The real binary lives in the data directory because STed2 derives its
+config-file path from `argv[0]` via `strmfe()`; keeping binary and cnf
+adjacent is the simplest way to make that lookup succeed for any `--prefix`.
+
+### CFLAGS notes
 
 | Flag | Why |
 | --- | --- |
@@ -44,48 +68,62 @@ make CFLAGS="-g -O2 -fgnu89-inline -fcommon \
 | `-Wno-implicit-function-declaration` | Many call sites lack prototypes; GCC 14 makes this an error. |
 | `-Wno-unused-result` | A handful of `fread()` calls discard the return value. |
 
-The `po/` (gettext) subdirectory will fail because of non-ASCII comments in
-source. The main binary (`sted2/sted2/sted2`) is already done by then. Either
-ignore the trailing error or pre-create empty catalogs:
+## Customizing your install
 
-```bash
-touch po/sted2.pot po/sted2.po
+All knobs live in **`/usr/local/lib/sted/sted2.cnf`**. Edit with any text
+editor (the file is `root:audio` with group write, so members of the `audio`
+group can change it directly; otherwise `sudo $EDITOR`).
+
+The launcher's only automatic edit is `midi_port`, and only when the current
+value still looks like a default (`/dev/midi` or `/dev/snd/midiC[0-9]+D0`).
+Any other value is treated as user-customized and left alone. So you can
+change `player`, `font_name`, `def_path`, key bindings, etc. freely.
+
+### Smaller font (DevTerm-style 1280×480 screens)
+
+Default window is 96×32 cells × 16 px = 768×512 px. On a 480 px-tall display
+that doesn't fit. The cnf template already lists size alternatives; switch
+the active one from `-16-` to `-14-` (giving 32×14 = 448 px):
+
+```diff
+-*#font_name=-\*-fixed-\*-r-normal--14-\*-\*-\*
+-#font_name=-\*-fixed-\*-r-normal--16-\*-\*-\*
++#font_name=-\*-fixed-\*-r-normal--14-\*-\*-\*
++*#font_name=-\*-fixed-\*-r-normal--16-\*-\*-\*
 ```
 
-## Install
+(`*#` is the cnf's "commented out" marker, `#` is "active".)
 
-The bundled autotools `make install` is broken (`po/` failure, and the
-generated cnf hard-codes `/etc/sted2/deffile` which doesn't exist). Install
-manually:
+### Use a USB-MIDI hardware synth instead of FluidSynth
 
-```bash
-sudo install -d /usr/local/lib/sted/deffile
-sudo install -m 0755 sted2/sted2 /usr/local/lib/sted/sted2
-sudo install -m 0644 etc/sted2.fon /usr/local/lib/sted/sted2.fon
-sudo install -m 0644 etc/deffile/*.def /usr/local/lib/sted/deffile/
+1. Plug in the device. `aconnect -l` shows its ALSA seq client and port.
+2. Edit cnf:
 
-sudo install -m 0664 etc/sted2.cnf.in /usr/local/lib/sted/sted2.cnf
-sudo sed -i 's|^#def_path=/etc/sted2/deffile|#def_path=/usr/local/lib/sted/deffile|' \
-    /usr/local/lib/sted/sted2.cnf
+   ```text
+   #midi_port=/dev/snd/midiC<your-card>D0
+   #player=0,aplaymidi -p "<client>:<port>"
+   ```
 
-# Allow the launcher to update midi_port at startup (see below).
-sudo chgrp audio /usr/local/lib/sted /usr/local/lib/sted/sted2.cnf
-sudo chmod g+w  /usr/local/lib/sted /usr/local/lib/sted/sted2.cnf
+3. Don't install / load `snd-virmidi`. The launcher will see no virmidi
+   client and leave your `midi_port` alone. FluidSynth, if present, just
+   won't be used.
 
-sudo install -m 0755 launchers/sted2      /usr/local/bin/sted2
-sudo install -m 0755 launchers/sted2-play /usr/local/bin/sted2-play
+### Use an external player (TiMidity, etc.)
 
-# Make sure your user is in the audio group (log out / in afterwards):
-sudo usermod -aG audio "$USER"
+```text
+#player=1,timidity -idq -f -EFchorus=0 -EFreverb=0 -s22.05
 ```
 
-## FluidSynth + virmidi
+The launcher's `midi_port` rule still applies (only stomps on virmidi-style
+defaults), so the two settings are independent.
 
-STed2 has two distinct MIDI paths and both must be wired up for full use:
+## FluidSynth + virmidi setup
 
-| cnf key | Role | What this fork uses |
+STed2 has two distinct MIDI paths:
+
+| cnf key | Role | Default in this repo |
 | --- | --- | --- |
-| `#midi_port=` | Raw character device opened for **MIDI IN** (step-input echo, external MIDI keyboard). | A `snd-virmidi` raw device (`/dev/snd/midiC<n>D0`). |
+| `#midi_port=` | Raw character device opened for **MIDI IN** (step input echo, external MIDI keyboard). | Auto-pointed at `snd-virmidi` by the launcher. |
 | `#player=` | External command forked on **PLAY** to render the song. | `sted2-play`, which calls `aplaymidi -p <FluidSynth port>`. |
 
 ```bash
@@ -99,10 +137,10 @@ sudo modprobe snd-virmidi
 echo 'options snd-virmidi index=2' | sudo tee /etc/modprobe.d/snd-virmidi.conf
 ```
 
-At launch the wrapper discovers the current `Virtual Raw MIDI` and
-`FLUID Synth` ALSA sequencer clients, updates `midi_port` in the cnf to match
-the actual `/dev/snd/midiC*D0` device, and runs `aconnect virmidi → FluidSynth`.
-No manual port-number bookkeeping is required.
+The launcher does the rest at startup: discovers the current `Virtual Raw
+MIDI` and `FLUID Synth` ALSA sequencer clients, updates `midi_port` in the
+cnf to match, and `aconnect`s the two together. No manual port-number
+bookkeeping required.
 
 ## Run
 
@@ -112,37 +150,9 @@ sted2 mysong.RCP       # open a file
 sted2 -h               # show all options
 ```
 
-The binary itself is a small X11 client (Xaw / ncurses). `STED_LOCALE_DIR`
-follows the configure prefix; data lookup is anchored to the binary's path
-via `strmfe(argv[0], "cnf")`, which is why the launcher `cd`s into the data
-directory before `exec`'ing the real binary.
-
-## Notes for the ClockworkPi DevTerm A06
-
-This fork was originally written for the DevTerm A06; everything above
-applies, plus:
-
-- The DevTerm's 1280×480 screen does not fit the default 768×512 STed2
-  window vertically. The cnf template lists several font sizes already; set
-  the active one to `-14-`:
-
-  ```
-  #font_name=-*-fixed-*-r-normal--14-*-*-*
-  ```
-
-  giving a 32×14 = 448 px window.
-
-- xfwm4 on the DevTerm runs without an active compositor, which is exactly
-  the case the minimize/restore fix targets. No further configuration needed.
-
-- A06 CPU governor can be controlled with the
-  [`devterm-gearbox-a06`](https://github.com/clockworkpi) package
-  (binary: `a06-gearbox`). `sudo a06-gearbox -s 4` is a reasonable default
-  for running STed2 + FluidSynth.
-
 ## Repository layout
 
-```
+```text
 sted2/
 ├── README.md
 ├── launchers/
@@ -157,7 +167,8 @@ history walks pristine upstream → Debian packaging → fixes for modern Linux.
 
 ## License
 
-Per the upstream notice in [`debian/copyright`](sted2-2.07m+20010303/debian/copyright):
+Per the upstream notice in
+[`debian/copyright`](sted2-2.07m+20010303/debian/copyright):
 
 > Right for modification and improvement is granted. However it is requested
 > that when a modified version is publicly released, the accompanying DOC and
