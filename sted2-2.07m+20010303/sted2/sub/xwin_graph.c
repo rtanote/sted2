@@ -290,6 +290,232 @@ void XSTed_gline( int x1, int y1, int x2, int y2, int col, int ls ) {
   return;
 }
 
+/* PROTOTYPE: draw a slanted oval music note head at (x, y) in X68 graphic
+ * coords. filled=0 -> hollow (whole/half family), filled=1 -> filled. The
+ * head is ~7x4 pixels, slanted ~22° clockwise to mimic engraved notation. */
+void XSTed_gnote_head( int x, int y, int filled, int col ) {
+  int d, cx, cy;
+  XPoint pts[8];
+  XPoint outline[9];
+  int i;
+  /* gra_gakufu() computes y as the top-left of an old 16x16 glyph cell; the
+   * head's visual centre sat ~13 X68 units lower. Nudging here keeps every
+   * pitch landing exactly on a staff line or in the centre of a space, with
+   * C4 on the ledger line between treble and bass staves. */
+  const int Y_NUDGE_X68 = 13;
+
+  cx = W_Width  * x / X68_GWidth;
+  cy = (W_Height * (y + Y_NUDGE_X68) / X68_GHeight) % W_Height;
+  d  = ( y >= X68_GHeight ) ? 1 : 0;
+
+  /* Slanted ellipse octagon, ~8 wide * 5 tall, clockwise slant. */
+  pts[0].x = cx + 4; pts[0].y = cy - 1;
+  pts[1].x = cx + 3; pts[1].y = cy - 2;
+  pts[2].x = cx + 1; pts[2].y = cy - 3;
+  pts[3].x = cx - 2; pts[3].y = cy - 2;
+  pts[4].x = cx - 4; pts[4].y = cy + 1;
+  pts[5].x = cx - 3; pts[5].y = cy + 2;
+  pts[6].x = cx - 1; pts[6].y = cy + 3;
+  pts[7].x = cx + 2; pts[7].y = cy + 2;
+
+  XSTed_SetGColor( col );
+  if ( filled ) {
+    if ( d == current_gwindow )
+      XFillPolygon( XSTed_d, XSTed_w, XSTed_ggc, pts, 8,
+                    Convex, CoordModeOrigin );
+    XFillPolygon( XSTed_d, XSTed_gscr[d], XSTed_ggc, pts, 8,
+                  Convex, CoordModeOrigin );
+  } else {
+    for ( i = 0; i < 8; i++ ) outline[i] = pts[i];
+    outline[8] = pts[0];
+    if ( d == current_gwindow )
+      XDrawLines( XSTed_d, XSTed_w, XSTed_ggc, outline, 9, CoordModeOrigin );
+    XDrawLines( XSTed_d, XSTed_gscr[d], XSTed_ggc, outline, 9, CoordModeOrigin );
+  }
+  isgscrchanged = 1;
+}
+
+/* PROTOTYPE: draw a stem (vertical line) and any flags for a note group.
+ * The flags are little filled scrolls mimicking the ♪ tail. */
+void XSTed_gnote_stem_flag( int xc, int y_top, int y_bottom, int ss, int col ) {
+  int d, sx, syt, syb;
+  int nflags, i;
+  const int Y_NUDGE_X68 = 13;
+
+  sx  = W_Width  * xc                       / X68_GWidth + 3;
+  syt = (W_Height * (y_top    + Y_NUDGE_X68) / X68_GHeight) % W_Height;
+  syb = (W_Height * (y_bottom + Y_NUDGE_X68) / X68_GHeight) % W_Height;
+  d   = ( y_top >= X68_GHeight ) ? 1 : 0;
+
+  XSTed_SetGColor( col );
+
+  /* Stem */
+  if ( d == current_gwindow )
+    XDrawLine( XSTed_d, XSTed_w, XSTed_ggc, sx, syt, sx, syb );
+  XDrawLine( XSTed_d, XSTed_gscr[d], XSTed_ggc, sx, syt, sx, syb );
+
+  if      ( ss == 5  || ss == 6  ) nflags = 1;
+  else if ( ss == 7  || ss == 8  ) nflags = 2;
+  else if ( ss == 9  || ss == 10 ) nflags = 3;
+  else if ( ss == 11 )             nflags = 4;
+  else                             nflags = 0;
+
+  for ( i = 0; i < nflags; i++ ) {
+    int fy = syt + i * 5;
+    /* Filled curl-shaped flag: 6 points trace stem-attach -> outer-tip ->
+     * outer-back -> inner-back -> stem-attach for a comma/♪ silhouette. */
+    XPoint flag[6];
+    flag[0].x = sx;     flag[0].y = fy - 1;
+    flag[1].x = sx + 4; flag[1].y = fy + 1;
+    flag[2].x = sx + 7; flag[2].y = fy + 5;
+    flag[3].x = sx + 6; flag[3].y = fy + 7;
+    flag[4].x = sx + 3; flag[4].y = fy + 6;
+    flag[5].x = sx + 1; flag[5].y = fy + 3;
+    if ( d == current_gwindow )
+      XFillPolygon( XSTed_d, XSTed_w, XSTed_ggc, flag, 6,
+                    Convex, CoordModeOrigin );
+    XFillPolygon( XSTed_d, XSTed_gscr[d], XSTed_ggc, flag, 6,
+                  Convex, CoordModeOrigin );
+  }
+
+  isgscrchanged = 1;
+}
+
+/* PROTOTYPE: draw ledger lines for a note pitch. For pitches outside the two
+ * main staves, draws every line position between the closest staff edge and
+ * the note itself. So B5 (just above F5) gets the A5 ledger; B6 (5 steps
+ * higher) gets A5/C6/E6/G6/B6 = 5 ledgers. C4 between staves gets one. */
+static void draw_ledger_at( int cx, int cy_x68, int d ) {
+  const int half_w = 10;
+  int cy = (W_Height * cy_x68 / X68_GHeight) % W_Height;
+  if ( d == current_gwindow )
+    XDrawLine( XSTed_d, XSTed_w, XSTed_ggc, cx - half_w, cy, cx + half_w, cy );
+  XDrawLine( XSTed_d, XSTed_gscr[d], XSTed_ggc, cx - half_w, cy, cx + half_w, cy );
+}
+
+void XSTed_gledger( int x, int y, int col ) {
+  int cx, d, y_n, L;
+  const int Y_NUDGE_X68 = 13;
+
+  y_n = y + Y_NUDGE_X68;
+  cx = W_Width * x / X68_GWidth;
+  d  = ( y >= X68_GHeight ) ? 1 : 0;
+
+  XSTed_SetGColor( col );
+
+  if ( y_n < 680 ) {
+    /* Above the treble staff. Walk down from A5 (the first ledger position
+     * above F5 top line) and emit each line that sits above-or-at the note. */
+    for ( L = 672; L >= y_n; L -= 8 ) {
+      draw_ledger_at( cx, L, d );
+    }
+  } else if ( y_n == 720 ) {
+    /* Middle C between the two staves. */
+    draw_ledger_at( cx, 720, d );
+  } else if ( y_n > 760 ) {
+    /* Below the bass staff. Walk up from E2. */
+    for ( L = 768; L <= y_n; L += 8 ) {
+      draw_ledger_at( cx, L, d );
+    }
+  }
+
+  isgscrchanged = 1;
+}
+
+/* PROTOTYPE: augmentation dot placed to the right of a note head. If the
+ * note sits on a line, the dot goes up half a staff position into the space
+ * above; in a space, the dot stays at the same y. */
+void XSTed_gnote_dot( int x, int y, int col ) {
+  int cx, cy, d, y_n;
+  const int Y_NUDGE_X68 = 13;
+
+  y_n = y + Y_NUDGE_X68;
+  if ( ( y_n % 8 ) == 0 ) y_n -= 4;
+
+  cx = W_Width * x / X68_GWidth + 8;
+  cy = (W_Height * y_n / X68_GHeight) % W_Height;
+  d  = ( y >= X68_GHeight ) ? 1 : 0;
+
+  XSTed_SetGColor( col );
+  if ( d == current_gwindow )
+    XFillArc( XSTed_d, XSTed_w, XSTed_ggc, cx, cy - 1, 3, 3, 0, 360 * 64 );
+  XFillArc( XSTed_d, XSTed_gscr[d], XSTed_ggc, cx, cy - 1, 3, 3, 0, 360 * 64 );
+  isgscrchanged = 1;
+}
+
+/* PROTOTYPE: rest symbol at (x, y). y is the X68 coord of the staff line we
+ * hang from / sit on (no Y_NUDGE — caller already passes a line position). */
+void XSTed_grest( int x, int y, int ss, int col ) {
+  int d, cx, cy;
+
+  cx = W_Width  * x / X68_GWidth;
+  cy = (W_Height * y / X68_GHeight) % W_Height;
+  d  = ( y >= X68_GHeight ) ? 1 : 0;
+
+  XSTed_SetGColor( col );
+
+  if ( ss <= 1 ) {
+    /* whole rest — fat slab hanging below the line */
+    if ( d == current_gwindow )
+      XFillRectangle( XSTed_d, XSTed_w, XSTed_ggc, cx - 5, cy, 11, 4 );
+    XFillRectangle( XSTed_d, XSTed_gscr[d], XSTed_ggc, cx - 5, cy, 11, 4 );
+  } else if ( ss <= 3 ) {
+    /* half rest — fat slab sitting on the line */
+    if ( d == current_gwindow )
+      XFillRectangle( XSTed_d, XSTed_w, XSTed_ggc, cx - 5, cy - 4, 11, 4 );
+    XFillRectangle( XSTed_d, XSTed_gscr[d], XSTed_ggc, cx - 5, cy - 4, 11, 4 );
+  } else if ( ss <= 5 ) {
+    /* quarter rest — zigzag */
+    if ( d == current_gwindow ) {
+      XDrawLine( XSTed_d, XSTed_w, XSTed_ggc, cx - 3, cy - 7, cx + 3, cy - 2 );
+      XDrawLine( XSTed_d, XSTed_w, XSTed_ggc, cx + 3, cy - 2, cx - 3, cy + 2 );
+      XDrawLine( XSTed_d, XSTed_w, XSTed_ggc, cx - 3, cy + 2, cx + 3, cy + 7 );
+    }
+    XDrawLine( XSTed_d, XSTed_gscr[d], XSTed_ggc, cx - 3, cy - 7, cx + 3, cy - 2 );
+    XDrawLine( XSTed_d, XSTed_gscr[d], XSTed_ggc, cx + 3, cy - 2, cx - 3, cy + 2 );
+    XDrawLine( XSTed_d, XSTed_gscr[d], XSTed_ggc, cx - 3, cy + 2, cx + 3, cy + 7 );
+  } else {
+    /* eighth / sixteenth / 32nd / 64th rest — slanted stem + 1..4 dots */
+    int n_curls, i;
+    if      ( ss <= 7 )  n_curls = 1;
+    else if ( ss <= 9 )  n_curls = 2;
+    else if ( ss <= 10 ) n_curls = 3;
+    else                 n_curls = 4;
+
+    if ( d == current_gwindow )
+      XDrawLine( XSTed_d, XSTed_w, XSTed_ggc, cx + 3, cy - 7, cx - 3, cy + 7 );
+    XDrawLine( XSTed_d, XSTed_gscr[d], XSTed_ggc, cx + 3, cy - 7, cx - 3, cy + 7 );
+    for ( i = 0; i < n_curls; i++ ) {
+      int dy = -6 + i * 5;
+      if ( d == current_gwindow )
+        XFillArc( XSTed_d, XSTed_w, XSTed_ggc, cx - 3, cy + dy - 2, 4, 4, 0, 360 * 64 );
+      XFillArc( XSTed_d, XSTed_gscr[d], XSTed_ggc, cx - 3, cy + dy - 2, 4, 4, 0, 360 * 64 );
+    }
+  }
+
+  isgscrchanged = 1;
+}
+
+/* PROTOTYPE: 0..2 augmentation dots to the right of a rest. */
+void XSTed_grest_dots( int x, int y, int dots, int col ) {
+  int cx, cy, d, i;
+
+  if ( dots <= 0 ) return;
+
+  cx = W_Width * x / X68_GWidth;
+  cy = (W_Height * y / X68_GHeight) % W_Height;
+  d  = ( y >= X68_GHeight ) ? 1 : 0;
+
+  XSTed_SetGColor( col );
+  for ( i = 0; i < dots; i++ ) {
+    int dx = cx + 8 + i * 5;
+    if ( d == current_gwindow )
+      XFillArc( XSTed_d, XSTed_w, XSTed_ggc, dx, cy - 2, 3, 3, 0, 360 * 64 );
+    XFillArc( XSTed_d, XSTed_gscr[d], XSTed_ggc, dx, cy - 2, 3, 3, 0, 360 * 64 );
+  }
+  isgscrchanged = 1;
+}
+
 void XSTed_trascpy( int dst, int src, int line, int mode ) {
 
   int sx, lx;

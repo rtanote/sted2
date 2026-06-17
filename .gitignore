@@ -28,3 +28,8 @@ sted2-2.07m+20010303/po/sted2.pot
 sted2-2.07m+20010303/po/sted2.po
 
 .claude/
+cg.rom
+boot.rom
+sram.ram
+tools/
+_clef_src/

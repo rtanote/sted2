@@ -6,19 +6,58 @@
 #define NORMAL 1
 
 /*
-ëÏ
-ëÐ	ëÓ
-ëÑ	ëÔ
+ï¿½ï¿½
+ï¿½ï¿½	ï¿½ï¿½
+ï¿½ï¿½	ï¿½ï¿½
 */
 /*
-char	o_zero[12][3]  ={"ë³","ë´","ëµ","ë¶","ë·","ë¸","ë¹","ëº","ë»","ë¼","ë½","ë¾"};
-char	o_flag_u[12][3]={"  ","ë¤","ë¤","ë¤","ë¤","ë¥","ë¥","ë¦","ë¦","ë§","ë§","ë¨"};
+char	o_zero[12][3]  ={"ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½"};
+char	o_flag_u[12][3]={"  ","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½","ï¿½"};
 */ /* Sep.04.1998 Daisuke Nagano */
 char	o_zero[12][3]  ={"  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  "};
-char	o_flag_u[12][3]={"  ","¢ö","¢ö","¢ö","¢ö","¢ö","¢ö","¢ö","¢ö","¢ö","¢ö","¢ö"};
-char	o_head_u[12][3]={"ö¡","ö¢","ö£","ö¤","ö¥","ö¤","ö¥","ö¤","ö¥","ö¤","ö¥","ö¥"};
-char	o_head_d[12][3]={"ö«","ö¬","ö­","ö®","ö¯","ö®","ö¯","ö®","ö¯","ö®","ö¯","ö¯"};
-char	o_flag_d[12][3]={"  ","ö°","ö°","ö°","ö°","ö±","ö±","ö²","ö²","ö³","ö³","ö´"};
+char	o_flag_u[12][3]={"  ","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½"};
+char	o_head_u[12][3]={"ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½"};
+char	o_head_d[12][3]={"ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½"};
+char	o_flag_d[12][3]={"  ","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½","ï¿½ï¿½"};
+
+/* PROTOTYPE: vector-drawn note heads + stems/flags + ledger lines + rests.
+ * Local only â€” not committed. ss < 3 (whole/dotted-half/half) -> hollow head,
+ * otherwise filled. ss == 0 (whole) gets no stem. */
+extern void note_head_print(int x, int y, int filled, int col);
+extern void note_stem_flag_print(int xc, int y_top, int y_bottom, int ss, int col);
+extern void ledger_line_print(int x, int y, int col);
+extern void note_rest_print(int x, int y, int ss, int col);
+extern void note_dot_print(int x, int y, int dots, int col);
+extern void rest_dot_print(int x, int y, int dots, int col);
+#define PROTO_HEAD_FILLED(ss) ((ss) >= 3 ? 1 : 0)
+
+/* PROTOTYPE: derive (effective ss, dot count) from the raw step value `b`
+ * and the duration index `ss0` produced by st_cv. st_cv lumps exact
+ * 1.75-base values into the next-longer non-dotted bucket; reclassify those
+ * back into the right base with dots=2.
+ *
+ * Bases (normalised to TIMEBASE=48): 192 W, 96 H, 48 Q, 24 e, 12 s, 6 32, 3 64
+ * Double-dotted exact values: 168 (ddH), 84 (ddQ), 42 (dde), 21 (dds),
+ * 10 (dd32 â€” 1.75*6=10.5, accept 10 or 11).
+ *
+ * Writes effective ss to *ss_out and dot count (0/1/2) to *dots_out. */
+static void classify_dots(int b, int ss0, int *ss_out, int *dots_out) {
+  int b_norm = b / (tbase / 48);
+  if (ss0 == 1 || ss0 == 3 || ss0 == 5 || ss0 == 7 || ss0 == 9) {
+    *ss_out = ss0;
+    *dots_out = 1;
+    return;
+  }
+  if (b_norm == 168 && ss0 == 0) { *ss_out = 2;  *dots_out = 2; return; }
+  if (b_norm == 84  && ss0 == 2) { *ss_out = 4;  *dots_out = 2; return; }
+  if (b_norm == 42  && ss0 == 4) { *ss_out = 6;  *dots_out = 2; return; }
+  if (b_norm == 21  && ss0 == 6) { *ss_out = 8;  *dots_out = 2; return; }
+  if ((b_norm == 10 || b_norm == 11) && ss0 == 8) {
+    *ss_out = 10; *dots_out = 2; return;
+  }
+  *ss_out = ss0;
+  *dots_out = 0;
+}
 
 char	onp_ps[12]={0,0,1,1,2,3,3,4,4,5,5,6};
 char	sharp_yp[14]={0*4,3*4,-1*4,2*4,5*4,1*4,4*4 , 4*4,1*4,5*4,2*4,6*4,3*4,7*4};
@@ -118,8 +157,8 @@ void	gra_gakufu(int po,int md)
     line(327   ,680+ 48+i*8,767,680+ 48+i*8,14,0xffff);
     line(327+48,680+104+i*8,767,680+104+i*8,14,0xcccc);
   }
-  g_print(330,675,"öÑ",15);g_print(330,691,"öÒ",15);g_print(330,707,"öÓ",15);
-  g_print(330,728,"öÕ",15);g_print(330,744,"öÖ",15);
+  g_print(330,675,"ï¿½ï¿½",15);g_print(330,691,"ï¿½ï¿½",15);g_print(330,707,"ï¿½ï¿½",15);
+  g_print(330,728,"ï¿½ï¿½",15);g_print(330,744,"ï¿½ï¿½",15);
 
   gx=392;ad=gra_add(po,md);
 
@@ -197,15 +236,32 @@ void	gra_gakufu(int po,int md)
 
     xx=gx-6+(b>>1);if(gx==392 && b>40){xx=xx-(b>>1)+6;}
     ss=st_cv(b);
+    {
+      int proto_dots = 0;
+      classify_dots(b, ss, &ss, &proto_dots);
+      /* proto_dots is used a few lines below for note_dot_print /
+       * rest_dot_print. ss may have been bumped (e.g., 84 -> ss=4 quarter). */
 
     if(cc==0 || (cc==1 && kno[0]==255)){
 
       strcpy(tmp0,o_zero[ss]);
       g_print(xx,688,tmp0,15);g_print(xx,688+6*8,tmp0,15);
+      /* PROTOTYPE: rest symbol on both staves.
+       * Whole / dotted-whole hang from the 2nd line from top (D5 / F3),
+       * everything else (half, quarter, 8th+) anchors on the middle line
+       * (B4 / D3) one staff-space lower. */
+      {
+        int yu = (ss > 1) ? 696 : 688;
+        int yl = yu + 48;
+        note_rest_print(xx,yu,ss,15);
+        note_rest_print(xx,yl,ss,15);
+        rest_dot_print(xx,yu,proto_dots,15);
+        rest_dot_print(xx,yl,proto_dots,15);
+      }
     }else{
-      int	ff,y,f,i,a,sff;
+      int	ff,fl,y,f,i,a,sff;
 
-      ff=9999;strcpy(tmp0,o_head_u[ss]);
+      ff=9999;fl=-9999;strcpy(tmp0,o_head_u[ss]);
       for(i=0;i<cc;i++){
 	a=kno[i];
 	if(a>9 && a<108){
@@ -214,16 +270,27 @@ void	gra_gakufu(int po,int md)
 	  f=onp_ps[a]+f*7;y=(819+7*4)-(f*4);
 
 	  if(y==651||y==659||y==707||y==755||y==763){
-	    g_print(xx-2,y,"öÐ",14);}
+	    g_print(xx-2,y,"ï¿½ï¿½",14);}
+	  /* PROTOTYPE: real ledger line for any pitch sitting on a line
+	   * outside the two main staves. Colour 15 (white) to match the
+	   * main staff lines. The helper itself decides if it applies. */
+	  ledger_line_print(xx,y,15);
 
 	  g_print(xx,y,tmp0,15);
-	  if(sff>0){g_print(xx-10,y+4,"öÏ",15);}
-	  if(sff<0){g_print(xx-10,y+4,"öÍ",15);}
+	  /* PROTOTYPE: vector-drawn note head + dots for dotted durations */
+	  note_head_print(xx,y,PROTO_HEAD_FILLED(ss),15);
+	  note_dot_print(xx,y,proto_dots,15);
+	  if(sff>0){g_print(xx-10,y+4,"ï¿½ï¿½",15);}
+	  if(sff<0){g_print(xx-10,y+4,"ï¿½ï¿½",15);}
 	  if(y<ff){ff=y;}
+	  if(y>fl){fl=y;}
 	}
       }
       if(ff<9999){g_print(xx,ff-6,o_flag_u[ss],15);}
+      /* PROTOTYPE: stem + flags above top-most note (whole notes get no stem) */
+      if(ff<9999 && ss>0) note_stem_flag_print(xx,ff-24,fl,ss,15);
     }
+    } /* proto_dots scope */
     cc=0;
   }
   next:
@@ -347,7 +414,7 @@ void	gra_special(int po,int md)
     line(gx,488+512-omodu ,gx  ,488+512-modu ,10,65535);
     line(gx,488+512-oentry,gx  ,488+512-entry,11,0xaaaa);
     line(gx,488+512-opan  ,gx  ,488+512-pan  ,10,0xaaaa);
-    /*²£Àþ*/
+    /*ï¿½ï¿½ï¿½ï¿½*/
     if(b>1){
       line(gx,488+512-pitch ,gx+b-1,488+512-pitch,13,65535);
       line(gx,488+512-vol   ,gx+b-1,488+512-vol  ,12,65535);
@@ -450,8 +517,8 @@ void	put_sharp(int skey,int x,int y)
 
   a=skey&7;
   if(a!=0){
-    /*    if((skey&15)<8){bs=0;tmp0="öÏ";}else{bs=7;tmp0="öÎ";}*//* Aug.17.1998 Daisuke Nagano */
-    if((skey&15)<8){bs=0;tmp0="¢ô";}else{bs=7;tmp0="¢õ";}
+    /*    if((skey&15)<8){bs=0;tmp0="ï¿½ï¿½";}else{bs=7;tmp0="ï¿½ï¿½";}*//* Aug.17.1998 Daisuke Nagano */
+    if((skey&15)<8){bs=0;tmp0="ï¿½ï¿½";}else{bs=7;tmp0="ï¿½ï¿½";}
     for(i=0;i<a;i++){g_print(x,y+sharp_yp[i+bs],tmp0,15);x+=4;}
   }
 }

@@ -47,6 +47,56 @@ void line( int x1, int y1, int x2, int y2, int col, int ls ) {
   return;
 }
 
+/* PROTOTYPE: vector-drawn music note head + stem/flag + ledger + rest + dot */
+extern void XSTed_gnote_head( int x, int y, int filled, int col );
+extern void XSTed_gnote_stem_flag( int xc, int y_top, int y_bottom, int ss, int col );
+extern void XSTed_gledger( int x, int y, int col );
+extern void XSTed_grest( int x, int y, int ss, int col );
+extern void XSTed_gnote_dot( int x, int y, int col );
+extern void XSTed_grest_dots( int x, int y, int dots, int col );
+
+void note_head_print( int x, int y, int filled, int col ) {
+  if ( isxwin ) {
+    XSTed_gnote_head( x, y, filled, col );
+  }
+  return;
+}
+
+void note_stem_flag_print( int xc, int y_top, int y_bottom, int ss, int col ) {
+  if ( isxwin ) {
+    XSTed_gnote_stem_flag( xc, y_top, y_bottom, ss, col );
+  }
+  return;
+}
+
+void ledger_line_print( int x, int y, int col ) {
+  if ( isxwin ) {
+    XSTed_gledger( x, y, col );
+  }
+  return;
+}
+
+void note_rest_print( int x, int y, int ss, int col ) {
+  if ( isxwin ) {
+    XSTed_grest( x, y, ss, col );
+  }
+  return;
+}
+
+void note_dot_print( int x, int y, int dots, int col ) {
+  /* Draws `dots` augmentation dots stacked horizontally to the right of a
+   * note head. Caller computes dots from the raw step value (see score.c). */
+  int i;
+  if ( ! isxwin ) return;
+  for ( i = 0; i < dots; i++ ) {
+    XSTed_gnote_dot( x + i * 5, y, col );
+  }
+}
+
+void rest_dot_print( int x, int y, int dots, int col ) {
+  if ( isxwin ) XSTed_grest_dots( x, y, dots, col );
+}
+
 void symbol( int x, int y, char *st, char h,
 	     char v, char mo, int p, char an ) {
 
