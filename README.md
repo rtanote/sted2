@@ -150,11 +150,20 @@ sted2 mysong.RCP       # open a file
 sted2 -h               # show all options
 ```
 
+A keyboard cheat sheet — including the X68000-to-PC-keyboard mapping you
+will need to understand the in-app help — is in
+[`docs/SHORTCUTS.md`](docs/SHORTCUTS.md). The original 1996 manuals (full
+operation manual and online help) live in
+[`sted2-2.07m+20010303/doc/original_docs/sted207/`](sted2-2.07m+20010303/doc/original_docs/sted207/)
+in Shift-JIS.
+
 ## Repository layout
 
 ```text
 sted2/
 ├── README.md
+├── docs/
+│   └── SHORTCUTS.md   # UTF-8 keyboard cheat sheet (this fork)
 ├── launchers/
 │   ├── sted2          # /usr/local/bin/sted2 — bash launcher
 │   └── sted2-play     # /usr/local/bin/sted2-play — PLAY-time player
