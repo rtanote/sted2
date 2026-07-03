@@ -10,6 +10,10 @@ This repository revives that port: builds on current Ubuntu / Debian, runs
 on a 64-bit X11 desktop without a compositor, and ships a turnkey FluidSynth
 hookup so you can hear what you sequence on a stock soft-synth install.
 
+![STed2 running on a Clockwork DevTerm A06 — data list on the left, the
+Ctrl+G score view on the right with MusiXTeX-derived note glyphs, and the
+controller-graph pane below it](docs/screenshot.png)
+
 ## What's fixed since `2.07m+20010303-4`
 
 | Area | Symptom on a modern system | Fix |
