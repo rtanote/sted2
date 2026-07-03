@@ -29,6 +29,8 @@ extern void ledger_line_print(int x, int y, int col);
 extern void note_rest_print(int x, int y, int ss, int col);
 extern void note_dot_print(int x, int y, int dots, int col);
 extern void rest_dot_print(int x, int y, int dots, int col);
+extern void treble_clef_print(int x, int y_anchor, int col);
+extern void bass_clef_print(int x, int y_anchor, int col);
 #define PROTO_HEAD_FILLED(ss) ((ss) >= 3 ? 1 : 0)
 
 /* PROTOTYPE: derive (effective ss, dot count) from the raw step value `b`
@@ -157,8 +159,19 @@ void	gra_gakufu(int po,int md)
     line(327   ,680+ 48+i*8,767,680+ 48+i*8,14,0xffff);
     line(327+48,680+104+i*8,767,680+104+i*8,14,0xcccc);
   }
-  g_print(330,675,"��",15);g_print(330,691,"��",15);g_print(330,707,"��",15);
-  g_print(330,728,"��",15);g_print(330,744,"��",15);
+  /* Treble and bass clefs, rendered as bitmaps extracted from a MusixTeX
+   * staff. The X68000 original here had 5 g_print() calls drawing CGROM
+   * external-character (gaiji) tiles — 3 stacked tiles for the treble clef
+   * (y=675/691/707) and 2 for the bass (y=728/744). Those byte sequences
+   * survived as `?` U+FFFD replacement chars through an EUC-JP→UTF-8 round
+   * trip somewhere in the source's history and no longer rendered anything
+   * meaningful on Linux. We drop them and draw real clefs instead.
+   *
+   * Anchors: G4 line = y=704 (2nd from bottom of treble staff);
+   *          F3 line = y=736 (2nd from top    of bass   staff).
+   * x=330 leaves a ~2px breathing gap from the staff's left edge (x=327). */
+  treble_clef_print(330, 704, 15);
+  bass_clef_print  (330, 736, 15);
 
   gx=392;ad=gra_add(po,md);
 

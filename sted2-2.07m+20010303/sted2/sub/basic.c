@@ -54,6 +54,8 @@ extern void XSTed_gledger( int x, int y, int col );
 extern void XSTed_grest( int x, int y, int ss, int col );
 extern void XSTed_gnote_dot( int x, int y, int col );
 extern void XSTed_grest_dots( int x, int y, int dots, int col );
+extern void XSTed_gtreble_clef( int x, int y_anchor, int col );
+extern void XSTed_gbass_clef( int x, int y_anchor, int col );
 
 void note_head_print( int x, int y, int filled, int col ) {
   if ( isxwin ) {
@@ -95,6 +97,14 @@ void note_dot_print( int x, int y, int dots, int col ) {
 
 void rest_dot_print( int x, int y, int dots, int col ) {
   if ( isxwin ) XSTed_grest_dots( x, y, dots, col );
+}
+
+void treble_clef_print( int x, int y_anchor, int col ) {
+  if ( isxwin ) XSTed_gtreble_clef( x, y_anchor, col );
+}
+
+void bass_clef_print( int x, int y_anchor, int col ) {
+  if ( isxwin ) XSTed_gbass_clef( x, y_anchor, col );
 }
 
 void symbol( int x, int y, char *st, char h,

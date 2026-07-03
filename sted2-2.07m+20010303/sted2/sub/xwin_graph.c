@@ -516,6 +516,179 @@ void XSTed_grest_dots( int x, int y, int dots, int col ) {
   isgscrchanged = 1;
 }
 
+/* Treble and bass clef bitmaps.
+ *
+ * Sourced from a MusixTeX-rendered staff (open-source — the LaTeX MusixTeX
+ * package and the Computer Modern–derived musixmf fonts are GPL-compatible),
+ * extracted by tools/extract_clefs.py: red pixels in crefs.png isolated, the
+ * source's own staff lines auto-detected, and resampled so 1 staff space ==
+ * 8 px (matching STed2's 8-X68-unit staff spacing in score view).
+ *
+ * Encoding is row-major 1bpp, MSB-first; _ANCHOR is the bitmap row that
+ * aligns with the clef's reference staff line (G4 for treble, F3 for bass).
+ */
+#define treble_clef_W      20
+#define treble_clef_H      57
+#define treble_clef_BPR    3
+#define treble_clef_ANCHOR 37
+static const unsigned char treble_clef_bm[ treble_clef_H * treble_clef_BPR ] = {
+    0x00, 0x18, 0x00,
+    0x00, 0x38, 0x00,
+    0x00, 0x7C, 0x00,
+    0x00, 0x7C, 0x00,
+    0x00, 0xF6, 0x00,
+    0x00, 0xE2, 0x00,
+    0x00, 0xC2, 0x00,
+    0x01, 0x82, 0x00,
+    0x01, 0x83, 0x00,
+    0x01, 0x82, 0x00,
+    0x01, 0x86, 0x00,
+    0x01, 0x86, 0x00,
+    0x01, 0x8E, 0x00,
+    0x01, 0x9C, 0x00,
+    0x01, 0x9C, 0x00,
+    0x01, 0xB8, 0x00,
+    0x01, 0xF8, 0x00,
+    0x00, 0xF0, 0x00,
+    0x01, 0xF0, 0x00,
+    0x03, 0xE0, 0x00,
+    0x03, 0xE0, 0x00,
+    0x07, 0xC0, 0x00,
+    0x0F, 0xC0, 0x00,
+    0x0F, 0xC0, 0x00,
+    0x1F, 0x40, 0x00,
+    0x3E, 0x40, 0x00,
+    0x3E, 0x40, 0x00,
+    0x7C, 0x40, 0x00,
+    0x78, 0x7E, 0x00,
+    0xF8, 0xFF, 0x80,
+    0xF1, 0xFF, 0xC0,
+    0xF3, 0xFF, 0xE0,
+    0xE3, 0xA1, 0xE0,
+    0xE3, 0x30, 0xF0,
+    0xC6, 0x30, 0xF0,
+    0xC6, 0x30, 0x70,
+    0xC6, 0x10, 0x70,
+    0x42, 0x10, 0x70,
+    0x62, 0x10, 0x70,
+    0x20, 0x10, 0xE0,
+    0x30, 0x18, 0xE0,
+    0x18, 0x19, 0xC0,
+    0x0C, 0x0F, 0x80,
+    0x03, 0xFF, 0x00,
+    0x00, 0x78, 0x00,
+    0x00, 0x08, 0x00,
+    0x00, 0x08, 0x00,
+    0x00, 0x08, 0x00,
+    0x0C, 0x08, 0x00,
+    0x3E, 0x0C, 0x00,
+    0x3F, 0x0C, 0x00,
+    0x3F, 0x0C, 0x00,
+    0x3F, 0x08, 0x00,
+    0x3E, 0x08, 0x00,
+    0x1C, 0x18, 0x00,
+    0x1C, 0x70, 0x00,
+    0x0F, 0xE0, 0x00,
+};
+
+#define bass_clef_W      22
+#define bass_clef_H      26
+#define bass_clef_BPR    3
+#define bass_clef_ANCHOR 8
+static const unsigned char bass_clef_bm[ bass_clef_H * bass_clef_BPR ] = {
+    0x03, 0xE0, 0x00,
+    0x0F, 0xF8, 0x00,
+    0x18, 0x1E, 0x00,
+    0x30, 0x0E, 0x08,
+    0x60, 0x0F, 0x1C,
+    0x60, 0x07, 0xBC,
+    0x78, 0x07, 0x9C,
+    0x7C, 0x07, 0x80,
+    0x7C, 0x07, 0xC0,
+    0x7C, 0x07, 0x88,
+    0x38, 0x07, 0xDC,
+    0x00, 0x07, 0xBC,
+    0x00, 0x07, 0x9C,
+    0x00, 0x07, 0x80,
+    0x00, 0x0F, 0x80,
+    0x00, 0x0F, 0x00,
+    0x00, 0x0F, 0x00,
+    0x00, 0x1E, 0x00,
+    0x00, 0x1E, 0x00,
+    0x00, 0x3C, 0x00,
+    0x00, 0x78, 0x00,
+    0x00, 0xF0, 0x00,
+    0x01, 0xE0, 0x00,
+    0x03, 0x80, 0x00,
+    0x0E, 0x00, 0x00,
+    0x78, 0x00, 0x00,
+};
+
+/* Blit a 1bpp packed bitmap to (cx, top) in physical pixel coords on both the
+ * window and the off-screen pixmap. Set bits are drawn as individual points
+ * in the current GC's foreground colour. Caller positions the bitmap; the
+ * anchor row offset has already been subtracted from top. */
+static void blit_clef_bm( const unsigned char *bm, int W, int H, int BPR,
+                          int cx, int top, int d ) {
+  static XPoint pts[ 2048 ];
+  int n = 0;
+  int row, byte_idx, bit;
+
+  for ( row = 0; row < H; row++ ) {
+    for ( byte_idx = 0; byte_idx < BPR; byte_idx++ ) {
+      unsigned char v = bm[ row * BPR + byte_idx ];
+      if ( v == 0 ) continue;
+      for ( bit = 0; bit < 8; bit++ ) {
+        int col_px = byte_idx * 8 + bit;
+        if ( col_px >= W ) break;
+        if ( v & ( 1 << ( 7 - bit ) ) ) {
+          if ( n >= (int)( sizeof(pts) / sizeof(pts[0]) ) ) break;
+          pts[n].x = cx + col_px;
+          pts[n].y = top + row;
+          n++;
+        }
+      }
+    }
+  }
+  if ( n == 0 ) return;
+  if ( d == current_gwindow )
+    XDrawPoints( XSTed_d, XSTed_w, XSTed_ggc, pts, n, CoordModeOrigin );
+  XDrawPoints( XSTed_d, XSTed_gscr[d], XSTed_ggc, pts, n, CoordModeOrigin );
+}
+
+/* Treble clef at (x, y_anchor). x is the X68 logical x of the
+ * bitmap's left edge; y_anchor is the X68 y of the G4 line (= y=704 in the
+ * score view's treble staff). */
+void XSTed_gtreble_clef( int x, int y_anchor, int col ) {
+  int cx, cy, top, d;
+
+  cx  = W_Width  * x        / X68_GWidth;
+  cy  = (W_Height * y_anchor / X68_GHeight) % W_Height;
+  d   = ( y_anchor >= X68_GHeight ) ? 1 : 0;
+  top = cy - treble_clef_ANCHOR;
+
+  XSTed_SetGColor( col );
+  blit_clef_bm( treble_clef_bm, treble_clef_W, treble_clef_H,
+                treble_clef_BPR, cx, top, d );
+  isgscrchanged = 1;
+}
+
+/* Bass clef at (x, y_anchor). y_anchor is the F3 line (= y=736 in
+ * the score view's bass staff). */
+void XSTed_gbass_clef( int x, int y_anchor, int col ) {
+  int cx, cy, top, d;
+
+  cx  = W_Width  * x        / X68_GWidth;
+  cy  = (W_Height * y_anchor / X68_GHeight) % W_Height;
+  d   = ( y_anchor >= X68_GHeight ) ? 1 : 0;
+  top = cy - bass_clef_ANCHOR;
+
+  XSTed_SetGColor( col );
+  blit_clef_bm( bass_clef_bm, bass_clef_W, bass_clef_H,
+                bass_clef_BPR, cx, top, d );
+  isgscrchanged = 1;
+}
+
 void XSTed_trascpy( int dst, int src, int line, int mode ) {
 
   int sx, lx;
