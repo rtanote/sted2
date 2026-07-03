@@ -47,19 +47,21 @@ void line( int x1, int y1, int x2, int y2, int col, int ls ) {
   return;
 }
 
-/* PROTOTYPE: vector-drawn music note head + stem/flag + ledger + rest + dot */
-extern void XSTed_gnote_head( int x, int y, int filled, int col );
+/* MusixTeX-derived music notation glyphs: heads, stem+flags, ledger, rest,
+ * dot, and accidentals. See sub/xwin_graph.c for the bitmap data. */
+extern void XSTed_gnote_head( int x, int y, int head_type, int col );
 extern void XSTed_gnote_stem_flag( int xc, int y_top, int y_bottom, int ss, int col );
 extern void XSTed_gledger( int x, int y, int col );
 extern void XSTed_grest( int x, int y, int ss, int col );
 extern void XSTed_gnote_dot( int x, int y, int col );
 extern void XSTed_grest_dots( int x, int y, int dots, int col );
+extern void XSTed_gaccidental( int x, int y, int accid, int col );
 extern void XSTed_gtreble_clef( int x, int y_anchor, int col );
 extern void XSTed_gbass_clef( int x, int y_anchor, int col );
 
-void note_head_print( int x, int y, int filled, int col ) {
+void note_head_print( int x, int y, int head_type, int col ) {
   if ( isxwin ) {
-    XSTed_gnote_head( x, y, filled, col );
+    XSTed_gnote_head( x, y, head_type, col );
   }
   return;
 }
@@ -97,6 +99,12 @@ void note_dot_print( int x, int y, int dots, int col ) {
 
 void rest_dot_print( int x, int y, int dots, int col ) {
   if ( isxwin ) XSTed_grest_dots( x, y, dots, col );
+}
+
+/* Sharp / flat accidental. accid > 0 -> sharp, accid < 0 -> flat. y is the
+ * pitch line (anchor); x is where the accidental's LEFT edge lands. */
+void accidental_print( int x, int y, int accid, int col ) {
+  if ( isxwin ) XSTed_gaccidental( x, y, accid, col );
 }
 
 void treble_clef_print( int x, int y_anchor, int col ) {

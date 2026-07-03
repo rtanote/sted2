@@ -14,24 +14,27 @@
 char	o_zero[12][3]  ={"�","�","�","�","�","�","�","�","�","�","�","�"};
 char	o_flag_u[12][3]={"  ","�","�","�","�","�","�","�","�","�","�","�"};
 */ /* Sep.04.1998 Daisuke Nagano */
-char	o_zero[12][3]  ={"  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  "};
-char	o_flag_u[12][3]={"  ","��","��","��","��","��","��","��","��","��","��","��"};
-char	o_head_u[12][3]={"��","��","��","��","��","��","��","��","��","��","��","��"};
-char	o_head_d[12][3]={"��","��","��","��","��","��","��","��","��","��","��","��"};
-char	o_flag_d[12][3]={"  ","��","��","��","��","��","��","��","��","��","��","��"};
-
-/* PROTOTYPE: vector-drawn note heads + stems/flags + ledger lines + rests.
- * Local only — not committed. ss < 3 (whole/dotted-half/half) -> hollow head,
- * otherwise filled. ss == 0 (whole) gets no stem. */
-extern void note_head_print(int x, int y, int filled, int col);
+/* MusixTeX-derived music notation glyphs. o_zero/o_head_u/o_head_d/o_flag_u/
+ * o_flag_d were once CGROM external-character (gaiji) tiles; those byte
+ * sequences turned to U+FFFD replacement chars during an EUC-JP -> UTF-8
+ * round trip in the source's history, so their g_print() calls rendered
+ * nothing. The bitmap-based note_head_print / note_stem_flag_print /
+ * note_rest_print / accidental_print below replace them. */
+extern void note_head_print(int x, int y, int head_type, int col);
 extern void note_stem_flag_print(int xc, int y_top, int y_bottom, int ss, int col);
 extern void ledger_line_print(int x, int y, int col);
 extern void note_rest_print(int x, int y, int ss, int col);
 extern void note_dot_print(int x, int y, int dots, int col);
 extern void rest_dot_print(int x, int y, int dots, int col);
+extern void accidental_print(int x, int y, int accid, int col);
 extern void treble_clef_print(int x, int y_anchor, int col);
 extern void bass_clef_print(int x, int y_anchor, int col);
-#define PROTO_HEAD_FILLED(ss) ((ss) >= 3 ? 1 : 0)
+
+/* head_type per duration index ss (after classify_dots). */
+#define HEAD_WHOLE 0
+#define HEAD_HALF  1
+#define HEAD_QTR   2
+#define SS_TO_HEAD(ss) ( (ss) <= 1 ? HEAD_WHOLE : (ss) <= 3 ? HEAD_HALF : HEAD_QTR )
 
 /* PROTOTYPE: derive (effective ss, dot count) from the raw step value `b`
  * and the duration index `ss0` produced by st_cv. st_cv lumps exact
@@ -184,7 +187,9 @@ void	gra_gakufu(int po,int md)
   }
 
   if(trrhy[track]&0x80){skey=0;}
-  put_sharp(skey,328+20,670);put_sharp(skey,328+20,670+14*4);
+  /* Key signature: y=680 is F5 (treble) — pitch line of first sharp F#;
+   * y=736 is F3 (bass). sharp_yp[] offsets from those. */
+  put_sharp(skey,328+28,680);put_sharp(skey,328+28,680+14*4);
 
   while(gx<760 && ad<tr_len[track]-4){
   ggloop:		a=ptr[ad];if(a==0xf7){ad+=4;goto ggloop;}
@@ -214,7 +219,7 @@ void	gra_gakufu(int po,int md)
     if(a==0xf5 && gx!=392){
       skey=b;
       if(trrhy[track]&0x80){skey=0;}
-      put_sharp(skey,gx,670);put_sharp(skey,gx,670+14*4);
+      put_sharp(skey,gx+8,680);put_sharp(skey,gx+8,680+14*4);
       b=44;
     }else{b=2;}
     goto next;
@@ -256,25 +261,19 @@ void	gra_gakufu(int po,int md)
        * rest_dot_print. ss may have been bumped (e.g., 84 -> ss=4 quarter). */
 
     if(cc==0 || (cc==1 && kno[0]==255)){
-
-      strcpy(tmp0,o_zero[ss]);
-      g_print(xx,688,tmp0,15);g_print(xx,688+6*8,tmp0,15);
-      /* PROTOTYPE: rest symbol on both staves.
-       * Whole / dotted-whole hang from the 2nd line from top (D5 / F3),
-       * everything else (half, quarter, 8th+) anchors on the middle line
-       * (B4 / D3) one staff-space lower. */
-      {
-        int yu = (ss > 1) ? 696 : 688;
-        int yl = yu + 48;
-        note_rest_print(xx,yu,ss,15);
-        note_rest_print(xx,yl,ss,15);
-        rest_dot_print(xx,yu,proto_dots,15);
-        rest_dot_print(xx,yl,proto_dots,15);
-      }
+      /* Rest symbol on both staves. Whole / dotted-whole hang from the 2nd
+       * line from top (D5 / F3); everything else (half, quarter, 8th+)
+       * anchors on the middle line (B4 / D3) one staff-space lower. */
+      int yu = (ss > 1) ? 696 : 688;
+      int yl = yu + 48;
+      note_rest_print(xx,yu,ss,15);
+      note_rest_print(xx,yl,ss,15);
+      rest_dot_print(xx,yu,proto_dots,15);
+      rest_dot_print(xx,yl,proto_dots,15);
     }else{
       int	ff,fl,y,f,i,a,sff;
 
-      ff=9999;fl=-9999;strcpy(tmp0,o_head_u[ss]);
+      ff=9999;fl=-9999;
       for(i=0;i<cc;i++){
 	a=kno[i];
 	if(a>9 && a<108){
@@ -282,25 +281,21 @@ void	gra_gakufu(int po,int md)
 	  sff=key_shift(skey,&f,&a);
 	  f=onp_ps[a]+f*7;y=(819+7*4)-(f*4);
 
-	  if(y==651||y==659||y==707||y==755||y==763){
-	    g_print(xx-2,y,"��",14);}
-	  /* PROTOTYPE: real ledger line for any pitch sitting on a line
-	   * outside the two main staves. Colour 15 (white) to match the
-	   * main staff lines. The helper itself decides if it applies. */
+	  /* Ledger line for pitches sitting on any line outside the two
+	   * main staves. The helper decides if it applies. */
 	  ledger_line_print(xx,y,15);
 
-	  g_print(xx,y,tmp0,15);
-	  /* PROTOTYPE: vector-drawn note head + dots for dotted durations */
-	  note_head_print(xx,y,PROTO_HEAD_FILLED(ss),15);
+	  /* Note head + dots for dotted durations. */
+	  note_head_print(xx,y,SS_TO_HEAD(ss),15);
 	  note_dot_print(xx,y,proto_dots,15);
-	  if(sff>0){g_print(xx-10,y+4,"��",15);}
-	  if(sff<0){g_print(xx-10,y+4,"��",15);}
+	  if(sff>0) accidental_print(xx-10, y+13, +1, 15);
+	  if(sff<0) accidental_print(xx-10, y+13, -1, 15);
 	  if(y<ff){ff=y;}
 	  if(y>fl){fl=y;}
 	}
       }
-      if(ff<9999){g_print(xx,ff-6,o_flag_u[ss],15);}
-      /* PROTOTYPE: stem + flags above top-most note (whole notes get no stem) */
+      /* Stem + flags above top-most note (whole / dotted-whole -> no stem;
+       * XSTed_gnote_stem_flag internally skips when ss<=1). */
       if(ff<9999 && ss>0) note_stem_flag_print(xx,ff-24,fl,ss,15);
     }
     } /* proto_dots scope */
@@ -525,14 +520,15 @@ int	st_cv(int st)
 /***************************/
 void	put_sharp(int skey,int x,int y)
 {
-  int	a,i,bs;
-  char	*tmp0;
+  int	a,i,bs,accid;
 
   a=skey&7;
   if(a!=0){
-    /*    if((skey&15)<8){bs=0;tmp0="��";}else{bs=7;tmp0="��";}*//* Aug.17.1998 Daisuke Nagano */
-    if((skey&15)<8){bs=0;tmp0="��";}else{bs=7;tmp0="��";}
-    for(i=0;i<a;i++){g_print(x,y+sharp_yp[i+bs],tmp0,15);x+=4;}
+    /* skey&15 < 8 -> sharp key, else flat key. bs=0 picks sharp offsets from
+     * sharp_yp[]; bs=7 picks the flat offsets. accid tells accidental_print
+     * which glyph to draw. */
+    if((skey&15)<8){bs=0;accid=+1;}else{bs=7;accid=-1;}
+    for(i=0;i<a;i++){accidental_print(x,y+sharp_yp[i+bs],accid,15);x+=4;}
   }
 }
 
