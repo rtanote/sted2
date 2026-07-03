@@ -96,6 +96,49 @@ the active one from `-16-` to `-14-` (giving 32×14 = 448 px):
 
 (`*#` is the cnf's "commented out" marker, `#` is "active".)
 
+### Hide the panel / titlebar on cramped screens
+
+STed2 sets `min_size == max_size` on its X11 window, so window managers
+treat it as non-resizable — F11, maximize buttons, and normal
+Alt-space fullscreen shortcuts all no-op. On small displays (DevTerm
+1280×480 in particular) the WM panel eats ~30 px off the top, so even
+the 14-px font's 672×448 window ends up clipped at the bottom.
+
+Push the window into WM fullscreen state via `wmctrl`: the STed2
+window itself stays exactly its intrinsic size, but the panel and
+title bar disappear so nothing overlaps it.
+
+```bash
+sudo apt install wmctrl
+cat > ~/bin/sted2-fs <<'SCRIPT'
+#!/bin/bash
+# Launch STed2 and put its window into WM fullscreen state.
+# Match by WM_CLASS ("sted") — WM_NAME is COMPOUND_TEXT and wmctrl
+# reports it as "N/A", so title-based matching does not work.
+sted2 &
+STED_PID=$!
+for i in $(seq 1 30); do
+  if wmctrl -lx | awk '{print tolower($3)}' | grep -q '^\.sted'; then
+    wmctrl -x -r sted -b add,fullscreen
+    break
+  fi
+  sleep 0.2
+done
+wait $STED_PID
+SCRIPT
+chmod +x ~/bin/sted2-fs
+```
+
+Then invoke `sted2-fs` instead of `sted2`. To break out of fullscreen
+without quitting STed2, from another terminal:
+
+```bash
+wmctrl -x -r sted -b remove,fullscreen
+```
+
+Tested on Xfce (xfwm4) 4.16; the recipe is WM-neutral in principle
+(any EWMH-compliant WM should honor `_NET_WM_STATE_FULLSCREEN`).
+
 ### Use a USB-MIDI hardware synth instead of FluidSynth
 
 1. Plug in the device. `aconnect -l` shows its ALSA seq client and port.
