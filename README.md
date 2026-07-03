@@ -200,13 +200,19 @@ will need to understand the in-app help — is in
 [`docs/SHORTCUTS.md`](docs/SHORTCUTS.md). The original 1996 manuals (full
 operation manual and online help) live in
 [`sted2-2.07m+20010303/doc/original_docs/sted207/`](sted2-2.07m+20010303/doc/original_docs/sted207/)
-in Shift-JIS.
+in Shift-JIS. Those files, along with `doc/original_docs/tuitou.doc`
+(a 1998 memorial to Takayuki "TURBO" Toda), are preserved verbatim as
+required by the upstream license — please note that as vintage material
+they contain era-appropriate personal contact information from
+collaborators.
 
 ## Repository layout
 
 ```text
 sted2/
 ├── README.md
+├── LICENSE            # upstream license + fork terms
+├── NOTICE             # third-party attributions (MusiXTeX)
 ├── docs/
 │   └── SHORTCUTS.md   # UTF-8 keyboard cheat sheet (this fork)
 ├── launchers/
@@ -221,19 +227,24 @@ history walks pristine upstream → Debian packaging → fixes for modern Linux.
 
 ## License
 
-Per the upstream notice in
-[`debian/copyright`](sted2-2.07m+20010303/debian/copyright):
+See [`LICENSE`](LICENSE) at the repo root. In short: per the upstream
+notice recorded in
+[`sted2-2.07m+20010303/debian/copyright`](sted2-2.07m+20010303/debian/copyright):
 
 > Right for modification and improvement is granted. However it is requested
 > that when a modified version is publicly released, the accompanying DOC and
 > HIS files are distributed along with it.
 
-The original documentation (`doc/original_docs/sted207/`) is preserved in
+The original documentation (`doc/original_docs/`) is preserved in
 this tree to satisfy that request. Changes in this fork are © 2026
 contributors and offered under the same terms.
+
+Third-party assets (the MusiXTeX-derived notation bitmaps) are covered
+in [`NOTICE`](NOTICE).
 
 Original authors:
 
 - Takayuki "TURBO" Toda (1991–1997, X68000)
 - Daisuke Nagano / Studio Breeze (1998–, Linux/UNIX port)
+- Masayuki Hatta (initial Debian packaging, 2000)
 - Junichi Uekawa (Debian packaging, 2001–)

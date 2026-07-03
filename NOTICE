@@ -1,0 +1,33 @@
+Third-party attributions
+========================
+
+This project includes work derived from the following upstream projects.
+
+MusiXTeX / musixmf font
+-----------------------
+
+The 17 music-notation glyphs embedded as 1bpp bitmap arrays in
+sted2-2.07m+20010303/sted2/sub/xwin_graph.c are derivatives of
+renderings from the MusiXTeX package's musixmf font: treble/bass clefs
+(character 9 & 27 range), note heads (chars 7, 8, 9), the augmentation
+dot (char 0), upstem flags (chars 40-43), rests (chars 60-66), and the
+sharp / flat accidentals (chars 52 & 50).
+
+- MusiXTeX package: https://ctan.org/pkg/musixtex
+  Distributed under the LaTeX Project Public License (LPPL), which
+  the Free Software Foundation classifies as GPL-compatible.
+- musixmf font: part of the musixtex-fonts distribution, derived from
+  Donald E. Knuth's Computer Modern typefaces (Knuth-license
+  compatible).
+
+The extraction pipeline that produced the bitmaps (tools/
+extract_clefs.py, tools/extract_notation.py) and the source PNGs are
+kept out of this repository via .gitignore; only the resulting 1bpp
+byte arrays live in the tracked C source, alongside comments that
+identify each glyph's musix20 character code and anchor rule.
+
+STed2 upstream
+--------------
+
+See LICENSE for the STed2 upstream terms and the list of original
+authors.

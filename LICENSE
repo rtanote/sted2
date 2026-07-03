@@ -1,0 +1,29 @@
+STed2 upstream license (as recorded in sted2-2.07m+20010303/debian/copyright,
+per the original author's notice):
+
+    Right for modification and improvement is granted. However it is
+    requested that when a modified version is publicly released, the
+    accompanying DOC and HIS files are distributed along with it.
+
+This fork honours the obligation by preserving the original 1996 manuals
+and history files under sted2-2.07m+20010303/doc/original_docs/ (in the
+original Shift-JIS / EUC-JP encoding). Anyone redistributing this repo
+is expected to keep that directory intact.
+
+Changes introduced by this fork (2026-) are offered under the same terms.
+
+Third-party notation glyphs
+---------------------------
+
+The 1bpp bitmaps in sted2-2.07m+20010303/sted2/sub/xwin_graph.c (treble
+and bass clefs, note heads, flags, rests, sharp, flat, augmentation dot)
+are extracted from renderings of the MusiXTeX package's musixmf font.
+See NOTICE for attribution and license references.
+
+Original authors
+----------------
+
+- Takayuki "TURBO" Toda (1991-1997, X68000)
+- Daisuke Nagano / Studio Breeze (1998-, Linux/UNIX port)
+- Masayuki Hatta (initial Debian packaging, 2000)
+- Junichi Uekawa (Debian packaging, 2001-)
