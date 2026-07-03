@@ -33,8 +33,15 @@ static char	key_name[32][4]={
   " A "," E "," B ","F# ","C# ","G# ","D# ","A# ",
   " A "," D "," G "," C "," F ","Bb ","Eb ","Ab "};
 
-/*       C  C# D  D# E  F  F# G  G# A  A# B */
-static char	key_shi[16][12]={
+/*       C  C# D  D# E  F  F# G  G# A  A# B
+ *
+ * signed char (not plain char): the flat-key rows use -1 to signal "this
+ * letter is flatted in this key". On ARM (and other ABIs where plain char
+ * defaults to unsigned) -1 would decode as 0xFF, making `ct + key_shi[...]`
+ * overflow past MIDI 127 and ctc() reject every flat-key note letter input
+ * ("B" in F major, "E"/"B" in Bb major, etc.). Sharp keys were unaffected
+ * because their non-zero entries are +1. */
+static signed char	key_shi[16][12]={
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/*    */
   0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,	/* #1 */
   1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,	/* #2 */

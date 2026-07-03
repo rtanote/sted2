@@ -65,7 +65,10 @@ static void classify_dots(int b, int ss0, int *ss_out, int *dots_out) {
 }
 
 char	onp_ps[12]={0,0,1,1,2,3,3,4,4,5,5,6};
-char	sharp_yp[14]={0*4,3*4,-1*4,2*4,5*4,1*4,4*4 , 4*4,1*4,5*4,2*4,6*4,3*4,7*4};
+/* signed char (not plain char): index 2 = -4 is the G# sharp's y-offset,
+ * which needs to be negative to place F#5 above the staff. See the
+ * signedness note on key_shi[] in key_sub.c. */
+signed char	sharp_yp[14]={0*4,3*4,-1*4,2*4,5*4,1*4,4*4 , 4*4,1*4,5*4,2*4,6*4,3*4,7*4};
 
 int	ga_adr[512],ga_xpo[512],ga_co;
 int	gr_adr[512],gr_xpo[512],gr_co;
