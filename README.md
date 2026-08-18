@@ -27,7 +27,29 @@ controller-graph pane below it](docs/screenshot.png)
 | `make install` workflow | `po/` died on EUC-JP comments; cnf substitution was a no-op; binary and cnf were installed to incompatible paths; launchers had no install rule. | `po/` and `intl/` dropped from `SUBDIRS`; cnf substitution fixed; the real binary is installed alongside the cnf (`${prefix}/lib/sted/`) and a bash launcher at `${prefix}/bin/sted2` is what users actually invoke. |
 | FluidSynth integration | STed2 wants a `/dev/midi`-style raw device and forks an external player; neither maps to a stock soft-synth. | Launcher wires `snd-virmidi` ↔ FluidSynth via `aconnect`; `sted2-play` forwards SMF tempfiles to FluidSynth via `aplaymidi`. |
 
-## Quick start
+## Install via apt (Debian/Ubuntu)
+
+Signed amd64/arm64 packages are published from CI to a GitHub Pages apt
+repository:
+
+```bash
+sudo curl -fsSL -o /usr/share/keyrings/sted2-archive-keyring.gpg \
+    https://rtanote.github.io/sted2/sted2-archive-keyring.gpg
+echo 'deb [signed-by=/usr/share/keyrings/sted2-archive-keyring.gpg] https://rtanote.github.io/sted2 stable main' \
+    | sudo tee /etc/apt/sources.list.d/sted2.list
+sudo apt update
+sudo apt install sted2
+
+sudo usermod -aG audio "$USER"   # log out / log in once
+```
+
+The package installs the launcher at `/usr/bin/sted2`, the real binary and
+data in `/usr/lib/sted/`, and the editable config in `/etc/sted2/`
+(symlinked back into `/usr/lib/sted/`, `root:audio` g+w via
+dpkg-statoverride). `fluidsynth` and `fluid-soundfont-gm` are recommends —
+install them for the out-of-the-box sound path.
+
+## Quick start (build from source)
 
 Tested on Ubuntu 22.04 / 24.04 (x86_64 and aarch64).
 

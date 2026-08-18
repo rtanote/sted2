@@ -4,7 +4,9 @@ on:
   push:
     branches: [main]
     paths:
-      - 'sted2-2.07m+20010303/**'
+      # NB: "+" is a special character in Actions filter patterns, so the
+      # source directory is matched with a wildcard instead.
+      - 'sted2-*/**'
       - '.github/workflows/apt-repo.yml'
   workflow_dispatch:
 
