@@ -18,6 +18,11 @@ override_dh_autoreconf:
 # The shipped configure is autoconf-2.13 era; call it directly instead of
 # letting dh_auto_configure pass options it does not understand.
 override_dh_auto_configure:
+	# git checkouts have arbitrary timestamps; make the shipped autotools
+	# output newer than its inputs so make never tries to regenerate it
+	# with modern (incompatible) autoconf/automake.
+	touch acinclude.m4 aclocal.m4 configure config.h.in stamp-h.in
+	find . -name Makefile.in -exec touch {} +
 	./configure --prefix=/usr \
 		--mandir=/usr/share/man --infodir=/usr/share/info \
 		--with-default-path=$(STED_LIBDIR)
