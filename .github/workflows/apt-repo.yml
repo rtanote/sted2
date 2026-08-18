@@ -1,0 +1,90 @@
+name: apt-repo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sted2-2.07m+20010303/**'
+      - '.github/workflows/apt-repo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+env:
+  GPG_FINGERPRINT: FD18213C395468FE9E7C54672191075C40AAA16F
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          # Build on 22.04 so the glibc dependency stays satisfiable on
+          # Ubuntu 22.04 targets (DevTerm A06); the debs install on later
+          # releases too.
+          - arch: amd64
+            runner: ubuntu-22.04
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential debhelper libncurses-dev libx11-dev \
+            libxaw7-dev libxpm-dev libxmu-dev gettext
+      - name: Build package
+        run: |
+          cd sted2-2.07m+20010303
+          dpkg-buildpackage -b -us -uc
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ matrix.arch }}
+          path: sted2_*.deb
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: debs
+          merge-multiple: true
+      - name: Install reprepro
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends reprepro
+      - name: Import signing key
+        run: echo "${{ secrets.APT_GPG_PRIVATE_KEY }}" | gpg --batch --import
+      - name: Build apt repository
+        run: |
+          mkdir -p repo/conf
+          cat > repo/conf/distributions <<EOF
+          Origin: STed2
+          Label: STed2
+          Codename: stable
+          Architectures: amd64 arm64
+          Components: main
+          Description: STed2 MIDI sequencer revival (github.com/rtanote/sted2)
+          SignWith: ${GPG_FINGERPRINT}
+          EOF
+          for deb in debs/*.deb; do
+            reprepro -b repo includedeb stable "$deb"
+          done
+          gpg --export --armor "${GPG_FINGERPRINT}" > repo/sted2-archive-keyring.asc
+          gpg --export "${GPG_FINGERPRINT}" > repo/sted2-archive-keyring.gpg
+          rm -rf repo/conf repo/db
+          touch repo/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: repo
+      - id: deployment
+        uses: actions/deploy-pages@v4
