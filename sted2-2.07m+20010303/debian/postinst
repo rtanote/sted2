@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+
+# The sted2 launcher rewrites midi_port in sted2.cnf at startup, so members
+# of the audio group need write access to the config (and the directory,
+# for sed -i's rename). Use statoverride so dpkg keeps the permissions.
+if [ "$1" = "configure" ]; then
+    if ! dpkg-statoverride --list /etc/sted2 >/dev/null 2>&1; then
+        dpkg-statoverride --update --add root audio 0775 /etc/sted2
+    fi
+    if ! dpkg-statoverride --list /etc/sted2/sted2.cnf >/dev/null 2>&1; then
+        dpkg-statoverride --update --add root audio 0664 /etc/sted2/sted2.cnf
+    fi
+fi
+
+#DEBHELPER#

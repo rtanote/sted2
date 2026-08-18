@@ -1,3 +1,21 @@
+sted2 (2.07m+20010303+a06.1) unstable; urgency=medium
+
+  * Revival of the Linux port for modern 64-bit systems
+    (https://github.com/rtanote/sted2); packaging taken over from the
+    archived Debian package.
+  * Fix 64-bit _dos_malloc sentinel, GCC >= 14 build, X11 restore without
+    a compositor, Ctrl+G score-view glyphs, and signed-char flat-key input
+    on ARM (see README.md for details).
+  * Ship FluidSynth integration: sted2 launcher auto-connects snd-virmidi
+    to FluidSynth, sted2-play plays SMF via aplaymidi.
+  * Modernize packaging: debhelper-compat 13, dh sequencer, source format
+    3.0 (native), current build dependency names.
+  * Install the real binary and data to /usr/lib/sted with the launcher in
+    /usr/bin; keep user-editable config in /etc/sted2 via symlinks, with
+    group-audio write access managed by dpkg-statoverride.
+
+ -- rtagaya <rtagaya@gmail.com>  Wed, 19 Aug 2026 12:00:00 +0900
+
 sted2 (2.07m+20010303-4) unstable; urgency=low
 
   * Work around missing font problem reported by Juha Erkkila.

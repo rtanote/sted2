@@ -1,17 +1,21 @@
 #!/bin/bash
-# /usr/local/bin/sted2 — system launcher for STed2.
+# System launcher for STed2.
 #  - Connects snd-virmidi -> FluidSynth via aconnect when both are present.
-#  - Updates midi_port in /usr/local/lib/sted/sted2.cnf to match the live
-#    virmidi card, BUT only if the existing value still looks like a default
-#    (/dev/midi or /dev/snd/midiC[0-9]+D0). Anything else is treated as a
-#    user customization (USB-MIDI, serial port, etc.) and left untouched.
+#  - Updates midi_port in sted2.cnf to match the live virmidi card, BUT only
+#    if the existing value still looks like a default (/dev/midi or
+#    /dev/snd/midiC[0-9]+D0). Anything else is treated as a user
+#    customization (USB-MIDI, serial port, etc.) and left untouched.
 #  - cd's into the data dir before exec so STed2's strmfe(argv[0], "cnf")
-#    resolves to /usr/local/lib/sted/sted2.cnf.
+#    resolves to ${STED2_DIR}/sted2.cnf.
+# STED2_DIR below is rewritten to the configured --with-default-path by
+# etc/Makefile's install-data-hook.
 
 set -u
 
 STED2_DIR=/usr/local/lib/sted
-STED2_CNF=${STED2_DIR}/sted2.cnf
+# Resolve through the symlink (the Debian package links sted2.cnf into
+# /etc/sted2) so sed -i edits the real file instead of replacing the link.
+STED2_CNF=$(readlink -f "${STED2_DIR}/sted2.cnf")
 
 VIRMIDI_LINE=$(aconnect -l 2>/dev/null | awk '/^client [0-9]+: .Virtual Raw MIDI [0-9]+-0./ {print; exit}')
 FLUID=$(aconnect -l 2>/dev/null | awk '/^client [0-9]+: .FLUID Synth/ {gsub(":","",$2); print $2; exit}')

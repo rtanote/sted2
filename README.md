@@ -219,10 +219,11 @@ sted2/
 ├── NOTICE             # third-party attributions (MusiXTeX)
 ├── docs/
 │   └── SHORTCUTS.md   # UTF-8 keyboard cheat sheet (this fork)
-├── launchers/
-│   ├── sted2          # /usr/local/bin/sted2 — bash launcher
-│   └── sted2-play     # /usr/local/bin/sted2-play — PLAY-time player
 ├── sted2-2.07m+20010303/   # source tree (upstream + Debian + this fork)
+│   ├── launchers/
+│   │   ├── sted2      # ${prefix}/bin/sted2 — bash launcher
+│   │   └── sted2-play # ${prefix}/bin/sted2-play — PLAY-time player
+│   └── debian/        # dpkg-buildpackage-ready packaging (debhelper 13)
 └── upstream/          # Debian snapshot archive for reference
 ```
 

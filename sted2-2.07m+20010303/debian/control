@@ -1,20 +1,32 @@
 Source: sted2
 Section: sound
 Priority: optional
-Maintainer: Junichi Uekawa <dancer@debian.org>
-Build-Depends: debhelper, libncurses5-dev, libx11-dev, libxaw7-dev, libxpm-dev, libxmu-dev, gettext-base, gettext
-Standards-Version: 3.5.6
+Maintainer: rtagaya <rtagaya@gmail.com>
+Build-Depends: debhelper-compat (= 13),
+ libncurses-dev,
+ libx11-dev,
+ libxaw7-dev,
+ libxpm-dev,
+ libxmu-dev,
+ gettext
+Standards-Version: 4.6.0
+Homepage: https://github.com/rtanote/sted2
+Rules-Requires-Root: no
 
 Package: sted2
 Architecture: any
-Depends: ${shlibs:Depends}
-Suggests: timidity | midiplay
-Description: a fast, functional MIDI sequencer
- STed2 is an open-source MIDI sequencer for Un*x/X platforms. 
- Originally written by the late Takayuki "TURBO" Toda for 
- SHARP X680x0 personal workstation series, it's now ported to GNU/Linux 
- and fully works on ncurses and X!
+Depends: ${shlibs:Depends}, ${misc:Depends}, alsa-utils
+Recommends: fluidsynth, fluid-soundfont-gm
+Description: fast step-input MIDI sequencer (X68000 STed2 revival)
+ STed2 is an open-source MIDI sequencer for Un*x/X platforms.
+ Originally written by the late Takayuki "TURBO" Toda for the
+ SHARP X680x0 personal workstation series, ported to GNU/Linux
+ by Daisuke Nagano, and revived for modern 64-bit systems.
  .
  The most distinctive feature of STed2 is its inputting method.
- STed2 supports "step" inputting, which enables you to input MIDI data 
- incredibly fast. Also supports real-time recording via /dev/midi.
+ STed2 supports "step" inputting, which enables you to input MIDI
+ data incredibly fast. Also supports real-time recording.
+ .
+ This build wires STed2 to FluidSynth out of the box: the sted2
+ launcher connects a snd-virmidi port to a running FluidSynth via
+ aconnect, and sted2-play forwards SMF playback with aplaymidi.

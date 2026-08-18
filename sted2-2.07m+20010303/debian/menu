@@ -1,2 +1,0 @@
-?package(sted2):needs=X11 section=Apps/Sound\
-  title="STed2" command="/usr/bin/sted2"
