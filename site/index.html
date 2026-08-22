@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STed2 — レコンポーザ系ステップ入力 MIDI シーケンサ (X68000 → Linux)</title>
+<meta name="description" content="X68000 生まれのステップ入力 MIDI シーケンサ STed2 を現代の Linux 向けに復活。RCP/R36 対応、apt で導入可能。A step-input MIDI sequencer in the Recomposer tradition, revived for modern Linux.">
+<meta property="og:title" content="STed2 — Recomposer-style MIDI sequencer, revived">
+<meta property="og:description" content="X68000 生まれのステップ入力 MIDI シーケンサを現代の Linux へ。RCP/R36 対応、apt install sted2 で導入。">
+<meta property="og:image" content="https://rtanote.github.io/sted2/screenshot.png">
+<meta property="og:url" content="https://rtanote.github.io/sted2/">
+<meta property="og:type" content="website">
+<style>
+  :root {
+    --bg: #101018;
+    --panel: #181824;
+    --fg: #d8d8e0;
+    --muted: #8a8a99;
+    --amber: #e8b04a;
+    --green: #6fce8f;
+    --border: #2c2c3c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
+    line-height: 1.75;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  h1, h2 { font-family: ui-monospace, "Menlo", "Consolas", monospace; }
+  h1 { color: var(--amber); font-size: 1.9rem; margin: 0; }
+  h2 {
+    color: var(--amber);
+    font-size: 1.1rem;
+    margin: 2.8rem 0 0.8rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+  }
+  h2::before { content: "■ "; color: var(--green); }
+  .tagline { color: var(--muted); margin: 0.4rem 0 0; }
+  .en { color: var(--muted); font-size: 0.9rem; }
+  img.hero {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-top: 1.8rem;
+  }
+  .caption { color: var(--muted); font-size: 0.8rem; text-align: center; margin-top: 0.4rem; }
+  pre {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  code { font-family: ui-monospace, "Menlo", "Consolas", monospace; }
+  pre .c { color: var(--muted); }
+  ul { padding-left: 1.4rem; }
+  li { margin: 0.3rem 0; }
+  a { color: var(--green); }
+  footer {
+    margin-top: 3.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+<main>
+
+<h1>STed2</h1>
+<p class="tagline">レコンポーザ系ステップ入力 MIDI シーケンサ — X68000 (1991) から現代の Linux へ<br>
+<span class="en">A step-input MIDI sequencer in the Recomposer tradition, from the Sharp X68000 to modern Linux.</span></p>
+
+<img class="hero" src="screenshot.png" alt="STed2 on a Clockwork DevTerm A06: data list, Ctrl+G score view, controller graph">
+<p class="caption">Clockwork DevTerm A06 上の STed2 — データリスト、Ctrl+G 譜面ビュー、コントローラグラフ</p>
+
+<h2>これは何?</h2>
+<p>故・戸田孝之 (TURBO) 氏が X68000 で開発した STed2 の UNIX 移植版 (長野大輔氏、1998〜) を、
+64bit・最新 GCC・コンポジタなし X11 で動くよう修理したものです。
+数値入力主体の高速なステップ入力、RCP / R36 ファイル、外字による譜面表示——当時の操作感をそのまま残しています。</p>
+<p class="en">The UNIX port of STed2 (originally by the late Takayuki "TURBO" Toda, ported by Daisuke Nagano)
+repaired for 64-bit systems, current GCC, and plain X11. The fast numeric step-input workflow is intact.</p>
+
+<h2>インストール / Install</h2>
+<p>Debian / Ubuntu (amd64, arm64)。Clockwork DevTerm A06 で動作確認済み。</p>
+<pre><code>sudo curl -fsSL -o /usr/share/keyrings/sted2-archive-keyring.gpg \
+    https://rtanote.github.io/sted2/sted2-archive-keyring.gpg
+echo 'deb [signed-by=/usr/share/keyrings/sted2-archive-keyring.gpg] https://rtanote.github.io/sted2 stable main' \
+    | sudo tee /etc/apt/sources.list.d/sted2.list
+sudo apt update &amp;&amp; sudo apt install sted2
+sudo usermod -aG audio "$USER"   <span class="c"># 一度ログインし直す / log out and back in</span>
+</code></pre>
+<p>FluidSynth を入れておけば (<code>sudo apt install fluidsynth fluid-soundfont-gm</code>)、
+追加設定なしで音が出ます。ソースからのビルドは <a href="https://github.com/rtanote/sted2#quick-start-build-from-source">README</a> 参照。</p>
+
+<h2>レコンポーザをお使いだった方へ</h2>
+<p>STed2 はレコンポーザの操作体系を汲むシーケンサです。RCP / R36 ファイルをそのまま読み書きし、
+ST/GT・ベロシティを数値で刻む入力もそのまま。当時のフロッピーに眠っている RCP データの再生・編集環境としても使えます
+(SMF への書き出しにも対応)。</p>
+<p class="en">STed2 follows the Recomposer school: it reads and writes RCP / R36 files natively and keeps
+the numeric ST/GT editing style. It also exports SMF — a practical way to revive old Recomposer data.</p>
+
+<h2>主な特徴 / Features</h2>
+<ul>
+  <li>ステップ入力主体の高速な打ち込み — キーボードだけで完結 / fast keyboard-only step input</li>
+  <li>RCP / R36 ネイティブ、SMF 書き出し / native RCP/R36, SMF export</li>
+  <li>Ctrl+G 譜面ビューを MusiXTeX 由来のグリフで復元 / restored score view</li>
+  <li>FluidSynth + snd-virmidi を自動接続、実機 MIDI 音源も可 / auto-wired soft synth, or real hardware</li>
+  <li>X11 + ncurses、DevTerm A06 のような小型機でも軽快 / light enough for handhelds</li>
+</ul>
+
+<h2>リンク / Links</h2>
+<ul>
+  <li><a href="https://github.com/rtanote/sted2">GitHub — ソースと詳しい README</a></li>
+  <li><a href="https://github.com/rtanote/sted2/blob/main/docs/SHORTCUTS.md">キーボードショートカット一覧 / shortcut cheat sheet</a></li>
+</ul>
+
+<footer>
+<p>STed2 © 1991–1997 Takayuki "TURBO" Toda / UNIX port © 1998– Daisuke Nagano /
+revival by <a href="https://github.com/rtanote">rtanote</a>.
+このページは apt リポジトリを兼ねています — this page doubles as the apt repository.</p>
+</footer>
+
+</main>
+</body>
+</html>

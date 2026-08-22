@@ -56,6 +56,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: debs
@@ -85,6 +86,10 @@ jobs:
           gpg --export "${GPG_FINGERPRINT}" > repo/sted2-archive-keyring.gpg
           rm -rf repo/conf repo/db
           touch repo/.nojekyll
+      - name: Add landing page
+        run: |
+          cp site/index.html repo/
+          cp docs/screenshot.png repo/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: repo
