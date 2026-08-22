@@ -10,6 +10,10 @@ on:
       - 'site/**'
       - 'docs/screenshot.png'
       - '.github/workflows/apt-repo.yml'
+  pull_request:
+    paths:
+      - 'sted2-*/**'
+      - '.github/workflows/apt-repo.yml'
   workflow_dispatch:
 
 permissions:
@@ -52,6 +56,7 @@ jobs:
           if-no-files-found: error
 
   publish:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
