@@ -7,6 +7,8 @@ on:
       # NB: "+" is a special character in Actions filter patterns, so the
       # source directory is matched with a wildcard instead.
       - 'sted2-*/**'
+      - 'site/**'
+      - 'docs/screenshot.png'
       - '.github/workflows/apt-repo.yml'
   workflow_dispatch:
 
