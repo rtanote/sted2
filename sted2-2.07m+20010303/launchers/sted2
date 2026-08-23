@@ -2,9 +2,9 @@
 # System launcher for STed2.
 #  - Connects snd-virmidi -> FluidSynth via aconnect when both are present.
 #  - Updates midi_port in sted2.cnf to match the live virmidi card, BUT only
-#    if the existing value still looks like a default (/dev/midi or
-#    /dev/snd/midiC[0-9]+D0). Anything else is treated as a user
-#    customization (USB-MIDI, serial port, etc.) and left untouched.
+#    if the existing value is /dev/midi or points at a virmidi (or vanished)
+#    card. A raw-midi path that belongs to a real interface (USB MIDI etc.)
+#    is user configuration and is left untouched.
 #  - cd's into the data dir before exec so STed2's strmfe(argv[0], "cnf")
 #    resolves to ${STED2_DIR}/sted2.cnf.
 # STED2_DIR below is rewritten to the configured --with-default-path by
@@ -27,11 +27,20 @@ if [ -n "$VIRMIDI_LINE" ]; then
 
   if [ -w "$STED2_CNF" ]; then
     CURRENT_PORT=$(sed -n 's/^#midi_port=//p' "$STED2_CNF" | head -1)
+    UPDATE=no
     case "$CURRENT_PORT" in
-      /dev/midi|/dev/snd/midiC[0-9]*D0)
-        sed -i "s%^#midi_port=.*%#midi_port=${VIRMIDI_DEV}%" "$STED2_CNF"
+      /dev/midi) UPDATE=yes ;;
+      /dev/snd/midiC[0-9]*D0)
+        CUR_CARD=$(echo "$CURRENT_PORT" | sed -n 's%^/dev/snd/midiC\([0-9]\+\)D0$%\1%p')
+        if [ ! -e "/sys/class/sound/card${CUR_CARD}/id" ] || \
+           grep -qi 'virmidi' "/sys/class/sound/card${CUR_CARD}/id"; then
+          UPDATE=yes
+        fi
         ;;
     esac
+    if [ "$UPDATE" = yes ]; then
+      sed -i "s%^#midi_port=.*%#midi_port=${VIRMIDI_DEV}%" "$STED2_CNF"
+    fi
   fi
 
   if [ -n "$FLUID" ]; then

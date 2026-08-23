@@ -1,3 +1,14 @@
+sted2 (2.07m+20010303+a06.2) unstable; urgency=medium
+
+  * Support hardware sound modules behind USB MIDI interfaces:
+    - The launcher no longer rewrites a midi_port that points at a real
+      interface; only /dev/midi and virmidi (or vanished) cards are
+      treated as defaults.
+    - sted2-play falls back to the first real MIDI output port when no
+      FluidSynth client is running, instead of erroring out.
+
+ -- rtagaya <rtagaya@gmail.com>  Sun, 23 Aug 2026 12:00:00 +0900
+
 sted2 (2.07m+20010303+a06.1) unstable; urgency=medium
 
   * Revival of the Linux port for modern 64-bit systems

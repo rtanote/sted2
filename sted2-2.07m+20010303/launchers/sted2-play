@@ -1,14 +1,22 @@
 #!/bin/bash
-# Resolve FluidSynth's ALSA seq port at runtime and aplaymidi the file(s).
+# Resolve a playable ALSA seq port at runtime and aplaymidi the file(s).
 # Called by STed2 as the external #player= command.
+# Prefers a running FluidSynth; otherwise falls back to the first real
+# MIDI output port (skipping Midi Through), so hardware sound modules
+# behind a USB MIDI interface work without editing the cnf.
 
 set -u
 
-FLUID=$(aconnect -lo 2>/dev/null | awk '/^client [0-9]+: .FLUID Synth/ {gsub(":","",$2); print $2; exit}')
+PORT=$(aconnect -lo 2>/dev/null | awk '/^client [0-9]+: .FLUID Synth/ {gsub(":","",$2); print $2 ":0"; exit}')
+if [ -z "${PORT}" ]; then
+  # Skip loopback-ish ports: Midi Through, and virmidi (silent without a
+  # synth on the other end).
+  PORT=$(aplaymidi -l 2>/dev/null | awk 'NR > 1 && !/Through/ && !/VirMIDI/ && !/Virtual Raw MIDI/ {print $1; exit}')
+fi
 
-if [ -z "${FLUID}" ]; then
-  echo "sted2-play: FLUID Synth client not found." >&2
+if [ -z "${PORT}" ]; then
+  echo "sted2-play: no MIDI output port found (no FluidSynth, no hardware)." >&2
   exit 1
 fi
 
-exec aplaymidi -p "${FLUID}:0" "$@"
+exec aplaymidi -p "${PORT}" "$@"
