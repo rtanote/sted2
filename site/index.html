@@ -148,6 +148,43 @@ It also exports SMF — a practical way to revive Recomposer data sleeping on ol
   <li>X11 + ncurses、DevTerm A06 のような小型機でも軽快 / light enough for handhelds</li>
 </ul>
 
+<h2>MIDI インタフェースの選び方 / MIDI interfaces on Linux</h2>
+<p>実機の音源を鳴らす場合、<strong>USB MIDI クラスコンプライアント対応</strong>の機器なら
+Linux 標準の ALSA ドライバだけで挿すだけで動きます(メーカー製ドライバは不要・存在しないことが多い)。
+定番どころでは Roland UM-ONE mk2、Yamaha UX16、M-Audio MIDISPORT 系、
+MIDI 端子付きオーディオインタフェースなど。</p>
+<ul>
+  <li>認識確認は <code>amidi -l</code>(raw MIDI)と <code>aconnect -l</code>(ALSA seq)。
+      STed2 へは <code>sted2.cnf</code> の <code>#midi_port=/dev/snd/midiC<em>x</em>D0</code> を書き換えて指定</li>
+  <li>無名の激安 USB-MIDI ケーブル(CH345 系)はノート演奏は通るものの
+      SysEx が化ける個体が多く、音源初期化(GS リセット等)を送るレコンポーザ的用途には不向き</li>
+  <li>MOTU MIDI Express 128 は手元にあるため動作検証予定(未検証)</li>
+</ul>
+<p class="en">Any <strong>class-compliant USB MIDI</strong> interface works on Linux out of the box via ALSA —
+no vendor driver needed. Check with <code>amidi -l</code> / <code>aconnect -l</code>, then point
+<code>#midi_port</code> in <code>sted2.cnf</code> at the device. Avoid no-name CH345 cables if you send
+SysEx (GS reset etc.). MOTU MIDI Express 128: on hand, verification planned.</p>
+
+<h2>ハードウェア音源を使う / Using hardware sound modules</h2>
+<p>FluidSynth ではなく実機の音源(SC-88 や MU シリーズ等)を鳴らしたい場合は、
+<strong>USB MIDI クラスコンプライアント対応</strong>のインタフェースなら Linux 標準の
+ALSA ドライバだけで挿すだけで認識されます(メーカー製ドライバは不要)。
+定番は Roland UM-ONE mk2、Yamaha UX16、M-Audio MIDISPORT 系、MIDI 端子付きオーディオインタフェースなど。</p>
+<ul>
+  <li>認識確認は <code>amidi -l</code>。あとは <code>/etc/sted2/sted2.cnf</code> の
+      <code>#midi_port=/dev/snd/midiC<em>x</em>D0</code> をそのデバイスに書き換えるだけ。
+      FluidSynth が動いていても設定は保持され、PLAY も自動でハードウェア側に出ます (a06.2 以降)</li>
+  <li>無名の激安 USB-MIDI ケーブル(CH345 系)はノート演奏は通っても SysEx が化ける個体が多く、
+      音源初期化 (GS リセット等) を送る用途には不向き</li>
+  <li>MOTU MIDI Express 128 は手元にあるため動作検証予定(未検証)</li>
+</ul>
+<p class="en">To drive real hardware (SC-88, MU series, …) instead of FluidSynth: any
+<strong>class-compliant USB MIDI</strong> interface works on Linux out of the box.
+Find the device with <code>amidi -l</code> and point <code>#midi_port</code> in
+<code>/etc/sted2/sted2.cnf</code> at it — the setting survives FluidSynth (a06.2+),
+and PLAY falls back to hardware automatically. Avoid no-name CH345 cables if you
+send SysEx. MOTU MIDI Express 128: on hand, verification planned.</p>
+
 <h2>リンク / Links</h2>
 <ul>
   <li><a href="https://github.com/rtanote/sted2">GitHub — ソースと詳しい README</a></li>
