@@ -95,7 +95,7 @@ jobs:
           touch repo/.nojekyll
       - name: Add landing page
         run: |
-          cp site/index.html repo/
+          cp site/* repo/
           cp docs/screenshot.png repo/
       - uses: actions/upload-pages-artifact@v5
         with:
